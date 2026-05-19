@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Pottery Toolkit — Product Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --clay:        #C4714A;
+    --clay-hover:  #B0603C;
+    --clay-light:  #F7EDE6;
+    --clay-dark:   #7A3F22;
+    --sand:        #F5F0EB;
+    --sand-dark:   #E8DDD3;
+    --kiln:        #2A2420;
+    --smoke:       #6B6360;
+    --fog:         #A8A29E;
+    --white:       #FFFFFF;
+    --border:      rgba(42,36,32,0.12);
+    --border-md:   rgba(42,36,32,0.22);
+    --shadow-sm:   0 1px 3px rgba(42,36,32,0.08);
+    --shadow-md:   0 4px 16px rgba(42,36,32,0.12);
+    --shadow-lg:   0 8px 32px rgba(42,36,32,0.18);
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--sand);
+    color: var(--kiln);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── AUTH SCREEN ─────────────────────────── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--sand);
+  }
+
+  .auth-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--kiln);
+    margin-bottom: 0.25rem;
+  }
+
+  .auth-sub {
+    font-size: 0.8125rem;
+    color: var(--smoke);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .auth-card input[type="password"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border: 1.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--sand);
+    color: var(--kiln);
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+    letter-spacing: 0.15em;
+    margin-bottom: 1rem;
+  }
+
+  .auth-card input[type="password"]:focus { border-color: var(--clay); }
+  .auth-card input[type="password"]::placeholder { letter-spacing: 0; color: var(--fog); }
+
+  .auth-error {
+    font-size: 0.8125rem;
+    color: #B94444;
+    margin-bottom: 0.75rem;
+    min-height: 1.2rem;
+  }
+
+  /* ── LAYOUT ──────────────────────────────── */
+  #app { display: none; min-height: 100vh; }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-brand {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--kiln);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .topbar-brand span {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--fog);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-left: 1px solid var(--border-md);
+    padding-left: 0.75rem;
+    margin-left: 0.25rem;
+  }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+  /* ── BUTTONS ─────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1rem;
+    transition: all 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--clay);
+    color: var(--white);
+  }
+  .btn-primary:hover { background: var(--clay-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--smoke);
+    border: 1px solid var(--border-md);
+  }
+  .btn-ghost:hover { background: var(--sand); color: var(--kiln); }
+
+  .btn-danger {
+    background: transparent;
+    color: #B94444;
+    border: 1px solid rgba(185,68,68,0.3);
+  }
+  .btn-danger:hover { background: rgba(185,68,68,0.07); }
+
+  .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
+
+  .btn-icon {
+    width: 32px; height: 32px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--smoke);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { background: var(--sand); color: var(--kiln); }
+
+  /* ── STATS ───────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    color: var(--kiln);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--smoke);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* ── TOOLBAR ─────────────────────────────── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: 0.3rem 0.875rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border-md);
+    background: var(--white);
+    color: var(--smoke);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+
+  .pill:hover { border-color: var(--clay); color: var(--clay); }
+  .pill.active { background: var(--clay); color: var(--white); border-color: var(--clay); }
+
+  .search-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--fog);
+    pointer-events: none;
+  }
+
+  .search-input {
+    padding: 0.45rem 0.75rem 0.45rem 2rem;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--white);
+    color: var(--kiln);
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--clay); }
+  .search-input::placeholder { color: var(--fog); }
+
+  /* ── IDEA CARDS ──────────────────────────── */
+  .ideas-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .idea-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .idea-card:hover { box-shadow: var(--shadow-sm); }
+  .idea-card.open { border-color: var(--clay); }
+
+  .idea-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .priority-pip {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pip-high   { background: #D94F4F; }
+  .pip-medium { background: #E09A2B; }
+  .pip-low    { background: #5A9A5A; }
+
+  .idea-main { flex: 1; min-width: 0; }
+  .idea-name { font-size: 0.9375rem; font-weight: 500; color: var(--kiln); }
+  .idea-chips { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+
+  .badge-idea        { background: #E3EEFF; color: #2255B8; }
+  .badge-research    { background: #FEF3DC; color: #8A5E00; }
+  .badge-prototyping { background: #EDE9FE; color: #5B3EC5; }
+  .badge-testing     { background: #E2F5E9; color: #1E7D40; }
+  .badge-ready       { background: #D9F5EF; color: #0D6B55; }
+  .badge-paused      { background: #EEECEA; color: #6B6360; }
+
+  .cat-chip {
+    font-size: 0.6875rem;
+    color: var(--smoke);
+    background: var(--sand);
+    padding: 0.15rem 0.55rem;
+    border-radius: 100px;
+  }
+
+  .chevron {
+    color: var(--fog);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    font-size: 1.1rem;
+  }
+  .idea-card.open .chevron { transform: rotate(180deg); }
+
+  /* ── EXPANDED BODY ───────────────────────── */
+  .idea-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .idea-card.open .idea-body { display: block; }
+
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 600px) { .body-grid { grid-template-columns: 1fr; } }
+
+  .field-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fog);
+    margin-bottom: 0.3rem;
+  }
+
+  .field-value {
+    font-size: 0.875rem;
+    color: var(--kiln);
+    line-height: 1.55;
+  }
+
+  .field-value.empty { color: var(--fog); font-style: italic; }
+
+  /* progress */
+  .progress-wrap {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--sand-dark);
+    border-radius: 100px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--clay);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+
+  /* tags */
+  .tags-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .tag {
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.6875rem;
+    background: var(--clay-light);
+    color: var(--clay-dark);
+    font-weight: 500;
+  }
+
+  /* notes */
+  .notes-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+  .note-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+  .note-item {
+    background: var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.875rem;
+  }
+
+  .note-text { font-size: 0.875rem; color: var(--kiln); line-height: 1.5; }
+  .note-meta { font-size: 0.6875rem; color: var(--fog); margin-top: 0.25rem; }
+
+  .note-input-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+
+  .note-input-row textarea {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    resize: none;
+    min-height: 60px;
+    background: var(--white);
+    color: var(--kiln);
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+  .note-input-row textarea:focus { border-color: var(--clay); }
+
+  /* inline controls */
+  .card-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .inline-select {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--kiln);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .inline-select:focus { border-color: var(--clay); }
+
+  .spacer { flex: 1; }
+
+  .meta-date { font-size: 0.6875rem; color: var(--fog); align-self: center; }
+
+  /* ── MODAL ───────────────────────────────── */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(42,36,32,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.2s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--kiln);
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row { margin-bottom: 1rem; }
+
+  .form-row label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--smoke);
+    margin-bottom: 0.35rem;
+  }
+
+  .form-row input,
+  .form-row textarea,
+  .form-row select {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    padding: 0.65rem 0.875rem;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--sand);
+    color: var(--kiln);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-row input:focus,
+  .form-row textarea:focus,
+  .form-row select:focus { border-color: var(--clay); background: var(--white); }
+
+  .form-row textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
+
+  .form-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── EMPTY STATE ─────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    color: var(--fog);
+  }
+
+  .empty-state .big {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--smoke);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  .empty-state p { font-size: 0.875rem; }
+
+  /* ── TOAST ───────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--kiln);
+    color: var(--white);
+    padding: 0.65rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.8125rem;
+    z-index: 500;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── LOADING ─────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ──────────────────────────── */
+  @media (max-width: 640px) {
+    .topbar { padding: 0 1rem; }
+    .main { padding: 1rem 1rem 3rem; }
+    .form-2col { grid-template-columns: 1fr; }
+    .search-input { width: 150px; }
+    .topbar-brand span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ─────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">The Pottery Toolkit</div>
+    <div class="auth-sub">Product Tracker</div>
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="current-password" />
+    <div class="auth-error" id="auth-error"></div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="tryLogin()">Enter</button>
+  </div>
+</div>
+
+<!-- ── APP ──────────────────────────────────────────────── -->
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-brand">
+      The Pottery Toolkit <span>Product Tracker</span>
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New idea
+    </button>
+  </header>
+
+  <main class="main">
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="toolbar">
+      <div class="filter-pills" id="filter-pills">
+        <button class="pill active" data-f="all" onclick="setFilter('all',this)">All</button>
+        <button class="pill" data-f="Idea" onclick="setFilter('Idea',this)">Idea</button>
+        <button class="pill" data-f="Research" onclick="setFilter('Research',this)">Research</button>
+        <button class="pill" data-f="Prototyping" onclick="setFilter('Prototyping',this)">Prototyping</button>
+        <button class="pill" data-f="Testing" onclick="setFilter('Testing',this)">Testing</button>
+        <button class="pill" data-f="Ready" onclick="setFilter('Ready',this)">Ready to launch</button>
+        <button class="pill" data-f="Paused" onclick="setFilter('Paused',this)">Paused</button>
+      </div>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" placeholder="Search ideas…" id="search-input" oninput="renderList()" />
+      </div>
+    </div>
+
+    <div class="ideas-grid" id="ideas-grid"></div>
+  </main>
+</div>
+
+<!-- ── MODAL ─────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <h2 id="modal-title">New product idea</h2>
+    <input type="hidden" id="modal-id" />
+
+    <div class="form-row">
+      <label>Product name *</label>
+      <input type="text" id="f-name" placeholder="e.g. Adjustable throwing bat" />
+    </div>
+
+    <div class="form-row">
+      <label>Category</label>
+      <input type="text" id="f-category" placeholder="e.g. Wheel tools, Glazing, Kilns…" />
+    </div>
+
+    <div class="form-row">
+      <label>Description</label>
+      <textarea id="f-description" placeholder="What is this product?"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Problem it solves</label>
+      <textarea id="f-problem" placeholder="What potter pain point does this address?"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Target customer</label>
+      <input type="text" id="f-customer" placeholder="e.g. Beginner throwers, studio teachers…" />
+    </div>
+
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Stage</label>
+        <select id="f-stage">
+          <option>Idea</option>
+          <option>Research</option>
+          <option>Prototyping</option>
+          <option>Testing</option>
+          <option>Ready</option>
+          <option>Paused</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Priority</label>
+        <select id="f-priority">
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Tags (comma-separated)</label>
+      <input type="text" id="f-tags" placeholder="e.g. hardware, beginner-friendly, seasonal" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveIdea()">Add idea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIG — replace these with your own values
+// ══════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://iepwcjilrzckcogcgdtko.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_pxpiGO_mPmfLLSTx3DkoyQ_89Gftrcr';
+const APP_PASSWORD  = 'taco1234';
+// ══════════════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STAGES = ['Idea','Research','Prototyping','Testing','Ready','Paused'];
+const STAGE_PROGRESS = { Idea:10, Research:25, Prototyping:50, Testing:75, Ready:100, Paused:0 };
+const BADGE_CLASS = {
+  Idea:'badge-idea', Research:'badge-research', Prototyping:'badge-prototyping',
+  Testing:'badge-testing', Ready:'badge-ready', Paused:'badge-paused'
+};
+const PIP_CLASS = { High:'pip-high', Medium:'pip-medium', Low:'pip-low' };
+
+let ideas = [];
+let activeFilter = 'all';
+let expandedId = null;
+
+// ── AUTH ────────────────────────────────────────────────
+function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === APP_PASSWORD) {
+    sessionStorage.setItem('ptk_auth', '1');
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadIdeas();
+  } else {
+    document.getElementById('auth-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+// Check session on load
+if (sessionStorage.getItem('ptk_auth') === '1') {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadIdeas();
+}
+
+// ── DATA ────────────────────────────────────────────────
+async function loadIdeas() {
+  document.getElementById('ideas-grid').innerHTML = '<div style="padding:3rem;text-align:center;color:var(--fog);font-size:.875rem">Loading…</div>';
+  const { data, error } = await db.from('ideas').select('*').order('created_at', { ascending: false });
+  if (error) { showToast('Error loading ideas: ' + error.message); return; }
+  ideas = data || [];
+  render();
+}
+
+async function saveIdea() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+
+  const btn = document.getElementById('modal-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const payload = {
+    name,
+    category:        document.getElementById('f-category').value.trim(),
+    description:     document.getElementById('f-description').value.trim(),
+    problem:         document.getElementById('f-problem').value.trim(),
+    target_customer: document.getElementById('f-customer').value.trim(),
+    stage:           document.getElementById('f-stage').value,
+    priority:        document.getElementById('f-priority').value,
+    tags:            document.getElementById('f-tags').value.trim(),
+  };
+
+  const editId = document.getElementById('modal-id').value;
+  let error;
+
+  if (editId) {
+    ({ error } = await db.from('ideas').update(payload).eq('id', editId));
+  } else {
+    ({ error } = await db.from('ideas').insert(payload));
+  }
+
+  btn.disabled = false;
+  btn.textContent = editId ? 'Save changes' : 'Add idea';
+
+  if (error) { showToast('Error: ' + error.message); return; }
+
+  showToast(editId ? 'Idea updated' : 'Idea added');
+  closeModal();
+  await loadIdeas();
+}
+
+async function addNote(ideaId) {
+  const ta = document.getElementById('note-ta-' + ideaId);
+  const text = ta.value.trim();
+  if (!text) return;
+
+  const idea = ideas.find(i => i.id === ideaId);
+  const notes = idea.notes || [];
+  notes.unshift({ text, date: new Date().toISOString() });
+
+  const { error } = await db.from('ideas').update({ notes }).eq('id', ideaId);
+  if (error) { showToast('Error saving note'); return; }
+
+  ta.value = '';
+  idea.notes = notes;
+  renderList();
+  showToast('Note added');
+}
+
+async function updateField(ideaId, field, value) {
+  const { error } = await db.from('ideas').update({ [field]: value }).eq('id', ideaId);
+  if (error) { showToast('Error updating'); return; }
+  const idea = ideas.find(i => i.id === ideaId);
+  if (idea) idea[field] = value;
+  render();
+  showToast('Saved');
+}
+
+async function deleteIdea(id) {
+  if (!confirm('Delete this idea? This cannot be undone.')) return;
+  const { error } = await db.from('ideas').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message); return; }
+  ideas = ideas.filter(i => i.id !== id);
+  if (expandedId === id) expandedId = null;
+  render();
+  showToast('Idea deleted');
+}
+
+// ── RENDER ──────────────────────────────────────────────
+function render() { renderStats(); renderList(); }
+
+function renderStats() {
+  const total = ideas.length;
+  const inProgress = ideas.filter(i => ['Prototyping','Testing'].includes(i.stage)).length;
+  const ready = ideas.filter(i => i.stage === 'Ready').length;
+  const highPri = ideas.filter(i => i.priority === 'High').length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total ideas</div></div>
+    <div class="stat-card"><div class="stat-num">${inProgress}</div><div class="stat-label">In progress</div></div>
+    <div class="stat-card"><div class="stat-num">${ready}</div><div class="stat-label">Ready to launch</div></div>
+    <div class="stat-card"><div class="stat-num">${highPri}</div><div class="stat-label">High priority</div></div>
+  `;
+}
+
+function renderList() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let filtered = ideas;
+  if (activeFilter !== 'all') filtered = filtered.filter(i => i.stage === activeFilter);
+  if (q) filtered = filtered.filter(i =>
+    (i.name||'').toLowerCase().includes(q) ||
+    (i.category||'').toLowerCase().includes(q) ||
+    (i.description||'').toLowerCase().includes(q) ||
+    (i.tags||'').toLowerCase().includes(q)
+  );
+
+  const el = document.getElementById('ideas-grid');
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="big">Nothing here yet</div><p>Add your first product idea using the button above.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(idea => ideaCardHTML(idea)).join('');
+}
+
+function ideaCardHTML(idea) {
+  const isOpen = expandedId === idea.id;
+  const progress = STAGE_PROGRESS[idea.stage] || 0;
+  const tags = (idea.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+  const notes = idea.notes || [];
+
+  const fmtDate = iso => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  };
+
+  return `
+  <div class="idea-card ${isOpen?'open':''}" id="card-${idea.id}">
+    <div class="idea-card-header" onclick="toggleCard('${idea.id}')">
+      <div class="priority-pip ${PIP_CLASS[idea.priority]||'pip-low'}"></div>
+      <div class="idea-main">
+        <div class="idea-name">${esc(idea.name)}</div>
+        <div class="idea-chips">
+          <span class="badge ${BADGE_CLASS[idea.stage]||''}">${idea.stage}</span>
+          ${idea.category ? `<span class="cat-chip">${esc(idea.category)}</span>` : ''}
+          <span style="font-size:.6875rem;color:var(--fog)">${idea.priority} priority</span>
+        </div>
+      </div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <div class="idea-body">
+      <div class="body-grid">
+        <div>
+          <div class="field-label">Description</div>
+          <div class="field-value ${!idea.description?'empty':''}">${idea.description ? esc(idea.description) : 'Not specified'}</div>
+        </div>
+        <div>
+          <div class="field-label">Problem it solves</div>
+          <div class="field-value ${!idea.problem?'empty':''}">${idea.problem ? esc(idea.problem) : 'Not specified'}</div>
+        </div>
+        <div>
+          <div class="field-label">Target customer</div>
+          <div class="field-value ${!idea.target_customer?'empty':''}">${idea.target_customer ? esc(idea.target_customer) : 'Not specified'}</div>
+        </div>
+        <div>
+          <div class="field-label">Tags</div>
+          ${tags.length ? `<div class="tags-row">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : '<div class="field-value empty">None</div>'}
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="field-label">Progress — ${idea.stage}</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+      </div>
+
+      <div class="notes-section">
+        <div class="field-label" style="margin-bottom:.5rem">Notes & updates</div>
+        <div class="note-list">
+          ${notes.length ? notes.map(n => `
+            <div class="note-item">
+              <div class="note-text">${esc(n.text)}</div>
+              <div class="note-meta">${fmtDate(n.date)}</div>
+            </div>`).join('') : '<div style="font-size:.8125rem;color:var(--fog);padding:.25rem 0">No notes yet.</div>'}
+        </div>
+        <div class="note-input-row">
+          <textarea id="note-ta-${idea.id}" placeholder="Add a note or update…" rows="2" onclick="event.stopPropagation()"></textarea>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); addNote('${idea.id}')">Add</button>
+        </div>
+      </div>
+
+      <div class="card-controls">
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.75rem;color:var(--smoke)">Stage</span>
+          <select class="inline-select" onchange="updateField('${idea.id}','stage',this.value)" onclick="event.stopPropagation()">
+            ${STAGES.map(s=>`<option value="${s}" ${idea.stage===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.75rem;color:var(--smoke)">Priority</span>
+          <select class="inline-select" onchange="updateField('${idea.id}','priority',this.value)" onclick="event.stopPropagation()">
+            ${['High','Medium','Low'].map(p=>`<option value="${p}" ${idea.priority===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="spacer"></div>
+        <span class="meta-date">Added ${fmtDate(idea.created_at)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openEditModal('${idea.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteIdea('${idea.id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── UI HELPERS ──────────────────────────────────────────
+function toggleCard(id) {
+  expandedId = expandedId === id ? null : id;
+  renderList();
+}
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function openModal() {
+  document.getElementById('modal-title').textContent = 'New product idea';
+  document.getElementById('modal-id').value = '';
+  document.getElementById('modal-save-btn').textContent = 'Add idea';
+  ['name','category','description','problem','customer','tags'].forEach(f => {
+    document.getElementById('f-'+f).value = '';
+  });
+  document.getElementById('f-stage').value = 'Idea';
+  document.getElementById('f-priority').value = 'Medium';
+  document.getElementById('modal-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function openEditModal(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  document.getElementById('modal-title').textContent = 'Edit idea';
+  document.getElementById('modal-id').value = id;
+  document.getElementById('modal-save-btn').textContent = 'Save changes';
+  document.getElementById('f-name').value        = idea.name || '';
+  document.getElementById('f-category').value    = idea.category || '';
+  document.getElementById('f-description').value = idea.description || '';
+  document.getElementById('f-problem').value     = idea.problem || '';
+  document.getElementById('f-customer').value    = idea.target_customer || '';
+  document.getElementById('f-stage').value       = idea.stage || 'Idea';
+  document.getElementById('f-priority').value    = idea.priority || 'Medium';
+  document.getElementById('f-tags').value        = idea.tags || '';
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+function handleBackdropClick(e) { if (e.target === document.getElementById('modal-backdrop')) closeModal(); }
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
