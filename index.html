@@ -494,7 +494,7 @@ function ideaCardHTML(idea) {
         onclick="event.stopPropagation();document.getElementById('img-upload-${idea.id}').click()"
         ondragover="event.stopPropagation();event.preventDefault();this.classList.add('drag-over')"
         ondragleave="event.stopPropagation();this.classList.remove('drag-over')"
-        ondrop="event.stopPropagation();event.preventDefault();this.classList.remove('drag-over');handleImageUpload('${idea.id}',{files:event.dataTransfer.files})">
+        ondrop="event.stopPropagation();event.preventDefault();this.classList.remove('drag-over');handleDrop('${idea.id}',event)">
         <input type="file" id="img-upload-${idea.id}" accept="image/*" onchange="handleImageUpload('${idea.id}',this)" onclick="event.stopPropagation()" />
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <p>Drag & drop or click to upload</p>
@@ -704,6 +704,12 @@ async function addInspirationLink(id) {
   const idea = ideas.find(i=>i.id===id);
   const inspiration_links = [...(idea.inspiration_links||[]),{url,label,note}];
   if (await patchIdea(id,{inspiration_links})) { renderList(); showToast('Link added'); }
+}
+
+async function handleDrop(id, event) {
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  await handleImageUpload(id, { files: [file] });
 }
 
 async function handleImageUpload(id, input) {
