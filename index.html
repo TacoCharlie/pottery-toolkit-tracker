@@ -125,7 +125,18 @@ body { font-family:var(--font-body); background:var(--sand); color:var(--kiln); 
 .item-del { position:absolute; top:0.5rem; right:0.5rem; background:none; border:none; color:var(--fog); cursor:pointer; font-size:1rem; line-height:1; padding:0.1rem 0.3rem; border-radius:4px; }
 .item-del:hover { color:#B94444; background:rgba(185,68,68,0.08); }
 
-.insp-img { width:100%; max-height:180px; object-fit:cover; border-radius:var(--radius-sm); margin-bottom:0.4rem; display:block; }
+.pic-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.6rem; margin-bottom:0.75rem; }
+.pic-tile { border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border); background:var(--sand); cursor:pointer; transition:box-shadow 0.15s; }
+.pic-tile:hover { box-shadow:var(--shadow-sm); }
+.pic-tile img { width:100%; height:110px; object-fit:cover; display:block; }
+.pic-tile .pic-tile-label { font-size:0.7rem; color:var(--smoke); padding:0.3rem 0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pic-lightbox { position:fixed; inset:0; background:rgba(42,36,32,0.85); z-index:300; display:flex; align-items:center; justify-content:center; padding:2rem; }
+.pic-lightbox-inner { background:var(--white); border-radius:var(--radius-xl); max-width:700px; width:100%; max-height:90vh; overflow-y:auto; padding:1.5rem; position:relative; }
+.pic-lightbox img { width:100%; border-radius:var(--radius-md); display:block; }
+.pic-lightbox-label { font-family:var(--font-display); font-size:1.1rem; color:var(--kiln); margin-top:0.75rem; }
+.pic-lightbox-note { font-size:0.875rem; color:var(--smoke); margin-top:0.4rem; line-height:1.55; }
+.pic-lightbox-close { position:absolute; top:1rem; right:1rem; background:var(--sand); border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center; color:var(--smoke); }
+.pic-lightbox-close:hover { background:var(--sand-dark); }
 
 .add-section { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
 .add-section-title { font-size:0.75rem; font-weight:600; color:var(--smoke); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; justify-content:space-between; }
@@ -147,6 +158,7 @@ body { font-family:var(--font-body); background:var(--sand); color:var(--kiln); 
 
 .upload-area { border:2px dashed var(--border-md); border-radius:var(--radius-md); padding:1.5rem; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--white); }
 .upload-area:hover { border-color:var(--clay); background:var(--clay-light); }
+.upload-area.drag-over { border-color:var(--clay); background:var(--clay-light); transform:scale(1.01); }
 .upload-area input[type="file"] { display:none; }
 .upload-area p { font-size:0.8125rem; color:var(--smoke); margin-top:0.4rem; }
 .upload-progress { font-size:0.8125rem; color:var(--clay); margin-top:0.5rem; }
@@ -470,21 +482,22 @@ function ideaCardHTML(idea) {
     </div>
     <hr class="section-divider"/>
     <div class="add-section-title" style="margin-bottom:.5rem">Inspiration images</div>
-    <div class="item-list">
-      ${pics.length ? pics.map((p,i)=>`
-        <div class="item-card">
-          <button class="item-del" onclick="deleteArrayItem('${idea.id}','inspiration_pics',${i})">×</button>
-          ${p.url?`<img src="${esc(p.url)}" class="insp-img" onerror="this.style.display='none'" />`:''}
-          ${p.label?`<div class="item-main"><strong>${esc(p.label)}</strong></div>`:''}
-          ${p.note?`<div class="item-note">${esc(p.note)}</div>`:''}
-          ${p.url?`<a href="${esc(p.url)}" target="_blank" class="item-link" style="font-size:.75rem">↗ Open original</a>`:''}
-        </div>`).join('') : '<div class="field-value empty" style="margin-bottom:.5rem">No images yet.</div>'}
-    </div>
+    ${pics.length ? `<div class="pic-tiles">
+      ${pics.map((p,i)=>`
+        <div class="pic-tile" onclick="event.stopPropagation();openLightbox('${idea.id}',${i})">
+          <img src="${esc(p.url)}" onerror="this.style.display='none'" />
+          <div class="pic-tile-label">${esc(p.label||'Image '+(i+1))}</div>
+        </div>`).join('')}
+    </div>` : '<div class="field-value empty" style="margin-bottom:.5rem">No images yet.</div>'}
     <div class="stacked-form">
-      <div class="upload-area" onclick="event.stopPropagation();document.getElementById('img-upload-${idea.id}').click()">
+      <div class="upload-area" 
+        onclick="event.stopPropagation();document.getElementById('img-upload-${idea.id}').click()"
+        ondragover="event.stopPropagation();event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="event.stopPropagation();this.classList.remove('drag-over')"
+        ondrop="event.stopPropagation();event.preventDefault();this.classList.remove('drag-over');handleImageUpload('${idea.id}',{files:event.dataTransfer.files})">
         <input type="file" id="img-upload-${idea.id}" accept="image/*" onchange="handleImageUpload('${idea.id}',this)" onclick="event.stopPropagation()" />
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p>Click to upload an image</p>
+        <p>Drag & drop or click to upload</p>
         <p style="font-size:.75rem;color:var(--fog)">JPG, PNG, WEBP supported</p>
       </div>
       <div id="img-upload-status-${idea.id}" class="upload-progress" style="display:none"></div>
@@ -792,7 +805,28 @@ async function deleteIdea(id) {
 }
 
 // UI
-function toggleCard(id) { expandedId = expandedId===id?null:id; if(!activeTab[id]) activeTab[id]='overview'; renderList(); }
+function openLightbox(ideaId, picIdx) {
+  const idea = ideas.find(i=>i.id===ideaId);
+  const p = (idea.inspiration_pics||[])[picIdx];
+  if (!p) return;
+  const lb = document.createElement('div');
+  lb.className = 'pic-lightbox';
+  lb.innerHTML = `
+    <div class="pic-lightbox-inner" onclick="event.stopPropagation()">
+      <button class="pic-lightbox-close" onclick="document.body.removeChild(this.closest('.pic-lightbox'))">×</button>
+      <img src="${esc(p.url)}" alt="${esc(p.label||'')}" />
+      ${p.label?`<div class="pic-lightbox-label">${esc(p.label)}</div>`:''}
+      ${p.note?`<div class="pic-lightbox-note">${esc(p.note)}</div>`:''}
+      <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap">
+        <a href="${esc(p.url)}" target="_blank" class="btn btn-ghost btn-sm">↗ Open original</a>
+        <button class="btn btn-danger btn-sm" onclick="document.body.removeChild(this.closest('.pic-lightbox'));deleteArrayItem('${ideaId}','inspiration_pics',${picIdx})">Delete image</button>
+      </div>
+    </div>`;
+  lb.addEventListener('click', () => document.body.removeChild(lb));
+  document.body.appendChild(lb);
+}
+
+
 function setTab(id,tab) { activeTab[id]=tab; renderList(); }
 function setFilter(f,el) {
   activeFilter=f;
