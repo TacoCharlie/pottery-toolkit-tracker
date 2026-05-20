@@ -273,7 +273,7 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
 .modal h2{font-family:var(--font-display);font-size:1.5rem;font-weight:400;color:var(--kiln);margin-bottom:1.5rem}
 .form-row{margin-bottom:1rem}
 .form-row label{display:block;font-size:.6875rem;text-transform:uppercase;letter-spacing:.08em;color:var(--smoke);margin-bottom:.35rem}
-.form-row input,.form-row textarea,.form-row select{width:100%;font-family:var(--font-body);font-size:.875rem;padding:.65rem .875rem;border:1px solid var(--border-md);border-radius:var(--radius-md);background:var(--sand);color:var(--kiln);outline:none;transition:border-color .2s}
+.form-row input,.form-row textarea,.form-row select{width:100%;font-family:var(--font-body);font-size:.875rem;padding:.65rem .875rem;autocomplete="off";border:1px solid var(--border-md);border-radius:var(--radius-md);background:var(--sand);color:var(--kiln);outline:none;transition:border-color .2s}
 .form-row input:focus,.form-row textarea:focus,.form-row select:focus{border-color:var(--clay);background:var(--white)}
 .form-row textarea{resize:vertical;min-height:80px;line-height:1.55}
 .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
@@ -287,7 +287,7 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
   <div class="auth-card">
     <div class="auth-logo">The Pottery Toolkit</div>
     <div class="auth-sub">Product Tracker</div>
-    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="current-password" />
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="new-password" />
     <div class="auth-error" id="auth-error"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="tryLogin()">Enter</button>
   </div>
@@ -327,11 +327,11 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
   <div class="modal">
     <h2 id="modal-title">New product idea</h2>
     <input type="hidden" id="modal-id" />
-    <div class="form-row"><label>Product name *</label><input type="text" id="f-name" placeholder="e.g. Mini Vase Mold Set" /></div>
-    <div class="form-row"><label>Category</label><input type="text" id="f-category" placeholder="e.g. Wheel tools, Glazing, Kilns…" /></div>
-    <div class="form-row"><label>Description</label><textarea id="f-description" placeholder="What is this product?"></textarea></div>
-    <div class="form-row"><label>Problem it solves</label><textarea id="f-problem" placeholder="What potter pain point does this address?"></textarea></div>
-    <div class="form-row"><label>Target customer</label><input type="text" id="f-customer" placeholder="e.g. Beginner throwers, studio teachers…" /></div>
+    <div class="form-row"><label>Product name *</label><input type="text" autocomplete="off" id="f-name" placeholder="e.g. Mini Vase Mold Set" /></div>
+    <div class="form-row"><label>Category</label><input type="text" autocomplete="off" id="f-category" placeholder="e.g. Wheel tools, Glazing, Kilns…" /></div>
+    <div class="form-row"><label>Description</label><textarea autocomplete="off" id="f-description" placeholder="What is this product?"></textarea></div>
+    <div class="form-row"><label>Problem it solves</label><textarea autocomplete="off" id="f-problem" placeholder="What potter pain point does this address?"></textarea></div>
+    <div class="form-row"><label>Target customer</label><input type="text" autocomplete="off" id="f-customer" placeholder="e.g. Beginner throwers, studio teachers…" /></div>
     <div class="form-2col">
       <div class="form-row"><label>Stage</label>
         <select id="f-stage"><option>Idea</option><option>Research</option><option>Prototyping</option><option>Testing</option><option>Ready</option><option>Paused</option></select>
@@ -340,7 +340,7 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
         <select id="f-priority"><option>High</option><option>Medium</option><option>Low</option></select>
       </div>
     </div>
-    <div class="form-row"><label>Tags (comma-separated)</label><input type="text" id="f-tags" placeholder="e.g. hardware, beginner-friendly, seasonal" /></div>
+    <div class="form-row"><label>Tags (comma-separated)</label><input type="text" autocomplete="off" id="f-tags" placeholder="e.g. hardware, beginner-friendly, seasonal" /></div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" id="modal-save-btn" onclick="saveIdea()">Add idea</button>
@@ -354,9 +354,9 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
     <h2 id="comp-modal-title">Add component</h2>
     <input type="hidden" id="comp-idea-id" />
     <input type="hidden" id="comp-edit-idx" />
-    <div class="form-row"><label>Component name *</label><input type="text" id="cf-name" placeholder="e.g. Vase Form, Cutter, Back Cutter" /></div>
-    <div class="form-row"><label>Description</label><textarea id="cf-desc" placeholder="What does this component do?" style="min-height:60px"></textarea></div>
-    <div class="form-row"><label>Reference image URL (optional)</label><input type="text" id="cf-img" placeholder="https://… or leave blank to upload later" /></div>
+    <div class="form-row"><label>Component name *</label><input type="text" autocomplete="off" id="cf-name" placeholder="e.g. Vase Form, Cutter, Back Cutter" /></div>
+    <div class="form-row"><label>Description</label><textarea autocomplete="off" id="cf-desc" placeholder="What does this component do?" style="min-height:60px"></textarea></div>
+    <div class="form-row"><label>Reference image URL (optional)</label><input type="text" autocomplete="off" id="cf-img" placeholder="https://… or leave blank to upload later" /></div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeCompModal()">Cancel</button>
       <button class="btn btn-primary" id="comp-save-btn" onclick="saveComponent()">Add component</button>
@@ -371,10 +371,10 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
     <input type="hidden" id="ver-idea-id" />
     <input type="hidden" id="ver-comp-idx" />
     <div id="ver-next-num" style="font-size:.8125rem;color:var(--smoke);margin-bottom:1rem"></div>
-    <div class="form-row"><label>Who worked on this?</label><input type="text" id="vf-who" placeholder="e.g. Jordan, Chadd, Self" /></div>
-    <div class="form-row"><label>What changed?</label><textarea id="vf-notes" placeholder="Describe what changed in this version…"></textarea></div>
-    <div class="form-row"><label>File reference (optional)</label><input type="text" id="vf-file-label" placeholder="File label, e.g. Cutter v3 STL" /></div>
-    <div class="form-row"><label>File URL / folder path</label><input type="text" id="vf-file-url" placeholder="https://… or MEGA › folder › file" /></div>
+    <div class="form-row"><label>Who worked on this?</label><input type="text" autocomplete="off" id="vf-who" placeholder="e.g. Jordan, Chadd, Self" /></div>
+    <div class="form-row"><label>What changed?</label><textarea autocomplete="off" id="vf-notes" placeholder="Describe what changed in this version…"></textarea></div>
+    <div class="form-row"><label>File reference (optional)</label><input type="text" autocomplete="off" id="vf-file-label" placeholder="File label, e.g. Cutter v3 STL" /></div>
+    <div class="form-row"><label>File URL / folder path</label><input type="text" autocomplete="off" id="vf-file-url" placeholder="https://… or MEGA › folder › file" /></div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveVersion()">Log version</button>
@@ -388,12 +388,12 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
     <h2>New release</h2>
     <input type="hidden" id="rel-idea-id" />
     <div id="rel-auto-name" style="font-size:.8125rem;color:var(--smoke);margin-bottom:1rem"></div>
-    <div class="form-row"><label>Release name (optional — auto-generated if blank)</label><input type="text" id="rf-name" placeholder="e.g. Jordan testing set, May prototype" /></div>
+    <div class="form-row"><label>Release name (optional — auto-generated if blank)</label><input type="text" autocomplete="off" id="rf-name" placeholder="e.g. Jordan testing set, May prototype" /></div>
     <div class="form-row"><label>Status</label>
       <select id="rf-status"><option value="Draft">Draft</option><option value="Testing">Testing</option><option value="Final">Final</option><option value="Archived">Archived</option></select>
     </div>
-    <div class="form-row"><label>Release notes</label><textarea id="rf-notes" placeholder="What's being tested? Who's involved? Key decisions…"></textarea></div>
-    <div class="form-row"><label>Release image URL (optional)</label><input type="text" id="rf-img" placeholder="https://… photo or render of this prototype set" /></div>
+    <div class="form-row"><label>Release notes</label><textarea autocomplete="off" id="rf-notes" placeholder="What's being tested? Who's involved? Key decisions…"></textarea></div>
+    <div class="form-row"><label>Release image URL (optional)</label><input type="text" autocomplete="off" id="rf-img" placeholder="https://… photo or render of this prototype set" /></div>
     <div id="rel-components-section">
       <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Component versions in this release</div>
       <div id="rel-comp-rows"></div>
@@ -401,15 +401,15 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
     <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Prototype costs (optional)</div>
     <div class="form-2col">
-      <div class="form-row"><label>Filament used (grams)</label><input type="number" id="rf-filament-g" placeholder="0" /></div>
-      <div class="form-row"><label>Cost per gram ($)</label><input type="number" id="rf-filament-cost" placeholder="0.00" step="0.01" /></div>
+      <div class="form-row"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="rf-filament-g" placeholder="0" /></div>
+      <div class="form-row"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="rf-filament-cost" placeholder="0.00" step="0.01" /></div>
     </div>
     <div class="form-2col">
-      <div class="form-row"><label>Print time (hours)</label><input type="number" id="rf-print-hours" placeholder="0" step="0.5" /></div>
-      <div class="form-row"><label>Electricity cost per hour ($)</label><input type="number" id="rf-elec-cost" placeholder="0.00" step="0.01" /></div>
+      <div class="form-row"><label>Print time (hours)</label><input type="number" autocomplete="off" id="rf-print-hours" placeholder="0" step="0.5" /></div>
+      <div class="form-row"><label>Electricity cost per hour ($)</label><input type="number" autocomplete="off" id="rf-elec-cost" placeholder="0.00" step="0.01" /></div>
     </div>
-    <div class="form-row"><label>Other prototype costs ($)</label><input type="number" id="rf-other-cost" placeholder="0.00" step="0.01" /></div>
-    <div class="form-row"><label>Prototype cost notes</label><input type="text" id="rf-cost-notes" placeholder="e.g. 2 failed prints, switched to PLA+" /></div>
+    <div class="form-row"><label>Other prototype costs ($)</label><input type="number" autocomplete="off" id="rf-other-cost" placeholder="0.00" step="0.01" /></div>
+    <div class="form-row"><label>Prototype cost notes</label><input type="text" autocomplete="off" id="rf-cost-notes" placeholder="e.g. 2 failed prints, switched to PLA+" /></div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeRelModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveRelease()">Create release</button>
@@ -426,12 +426,12 @@ body{font-family:var(--font-body);background:var(--sand);color:var(--kiln);min-h
     <div class="form-row"><label>Component this applies to</label>
       <select id="fb-comp"><option value="">Whole release / general</option></select>
     </div>
-    <div class="form-row"><label>From *</label><input type="text" id="fb-from" placeholder="e.g. Sister, Jordan, Self" /></div>
-    <div class="form-row"><label>Feedback *</label><textarea id="fb-text" placeholder="What was the feedback?"></textarea></div>
+    <div class="form-row"><label>From *</label><input type="text" autocomplete="off" id="fb-from" placeholder="e.g. Sister, Jordan, Self" /></div>
+    <div class="form-row"><label>Feedback *</label><textarea autocomplete="off" id="fb-text" placeholder="What was the feedback?"></textarea></div>
     <div class="form-row"><label>Status</label>
       <select id="fb-status"><option value="pending">Pending</option><option value="addressed">Addressed</option><option value="wontfix">Won't fix</option></select>
     </div>
-    <div class="form-row"><label>Addressed in (if applicable)</label><input type="text" id="fb-resolved" placeholder="e.g. Cutter v5, Release 4" /></div>
+    <div class="form-row"><label>Addressed in (if applicable)</label><input type="text" autocomplete="off" id="fb-resolved" placeholder="e.g. Cutter v5, Release 4" /></div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeFbModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveFeedback()">Add feedback</button>
@@ -615,7 +615,7 @@ function ideaCardHTML(idea){
           </div>`).join(''):'<div class="field-value empty" style="margin-bottom:.5rem">No notes yet.</div>'}
       </div>
       <div class="stacked-form">
-        <textarea id="note-ta-${idea.id}" placeholder="Add a note or update…" rows="2" onclick="event.stopPropagation()"></textarea>
+        <textarea autocomplete="off" id="note-ta-${idea.id}" placeholder="Add a note or update…" rows="2" onclick="event.stopPropagation()"></textarea>
         <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addNote('${idea.id}')">Add note</button></div>
       </div>
     </div>`;
@@ -749,9 +749,9 @@ function ideaCardHTML(idea){
         </div>`).join(''):'<div class="field-value empty" style="margin-bottom:.5rem">No links yet.</div>'}
     </div>
     <div class="stacked-form" style="margin-bottom:1.25rem">
-      <div class="field-group"><div class="form-row-label">URL</div><input type="text" id="link-url-${idea.id}" placeholder="https://…" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Label (optional)</div><input type="text" id="link-label-${idea.id}" placeholder="e.g. Pinterest board, competitor" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes (optional)</div><textarea id="link-note-${idea.id}" placeholder="What's interesting about this?" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="field-group"><div class="form-row-label">URL</div><input type="text" autocomplete="off" id="link-url-${idea.id}" placeholder="https://…" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Label (optional)</div><input type="text" autocomplete="off" id="link-label-${idea.id}" placeholder="e.g. Pinterest board, competitor" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes (optional)</div><textarea autocomplete="off" id="link-note-${idea.id}" placeholder="What's interesting about this?" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addInspirationLink('${idea.id}')">Add link</button></div>
     </div>
     <hr class="section-divider"/>
@@ -777,12 +777,12 @@ function ideaCardHTML(idea){
         <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="event.stopPropagation();clearImagePreview('${idea.id}')">✕ Remove</button>
       </div>
       <div id="img-upload-status-${idea.id}" class="upload-progress" style="display:none"></div>
-      <div class="field-group"><div class="form-row-label">Label (optional)</div><input type="text" id="pic-label-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes (optional)</div><textarea id="pic-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="field-group"><div class="form-row-label">Label (optional)</div><input type="text" autocomplete="off" id="pic-label-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes (optional)</div><textarea autocomplete="off" id="pic-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();submitImageUpload('${idea.id}')">Upload image</button></div>
       <hr style="border:none;border-top:1px solid var(--border);margin:.5rem 0"/>
       <p style="font-size:.75rem;color:var(--fog)">Or add by URL:</p>
-      <div class="field-group"><input type="text" id="pic-url-${idea.id}" placeholder="https://…" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><input type="text" autocomplete="off" id="pic-url-${idea.id}" placeholder="https://…" onclick="event.stopPropagation()" /></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addInspirationPicByUrl('${idea.id}')">Add by URL</button></div>
     </div>`;
 
@@ -806,9 +806,9 @@ function ideaCardHTML(idea){
     ${costTable(setupCosts)}
     ${totalSetup>0?`<div style="text-align:right;font-size:.8rem;margin-bottom:.75rem">Total: <strong>$${totalSetup.toFixed(2)}</strong></div>`:''}
     <div class="stacked-form" style="margin-bottom:1.25rem">
-      <div class="field-group"><div class="form-row-label">Item</div><input type="text" id="cost-setup-item-${idea.id}" placeholder="e.g. Tooling, mould" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" id="cost-setup-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" id="cost-setup-note-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Item</div><input type="text" autocomplete="off" id="cost-setup-item-${idea.id}" placeholder="e.g. Tooling, mould" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" autocomplete="off" id="cost-setup-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" autocomplete="off" id="cost-setup-note-${idea.id}" onclick="event.stopPropagation()" /></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','setup')">Add setup cost</button></div>
     </div>
     <hr class="section-divider"/>
@@ -817,9 +817,9 @@ function ideaCardHTML(idea){
     ${costTable(unitCosts)}
     ${totalUnit>0?`<div style="text-align:right;font-size:.8rem;margin-bottom:.75rem">Total per unit: <strong>$${totalUnit.toFixed(2)}</strong></div>`:''}
     <div class="stacked-form" style="margin-bottom:1.25rem">
-      <div class="field-group"><div class="form-row-label">Item</div><input type="text" id="cost-unit-item-${idea.id}" placeholder="e.g. Filament, packaging" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" id="cost-unit-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" id="cost-unit-note-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Item</div><input type="text" autocomplete="off" id="cost-unit-item-${idea.id}" placeholder="e.g. Filament, packaging" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" autocomplete="off" id="cost-unit-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" autocomplete="off" id="cost-unit-note-${idea.id}" onclick="event.stopPropagation()" /></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','unit')">Add unit cost</button></div>
     </div>
     <hr class="section-divider"/>
@@ -842,9 +842,9 @@ function ideaCardHTML(idea){
       ${pricing.map((p,i)=>`<tr><td>${esc(p.tier)}</td><td>$${esc(p.price)}</td><td>${esc(p.note||'')}</td><td>${totalUnit&&p.price?calcMargin(totalUnit,p.price):'—'}</td><td><button class="del-btn" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','pricing',${i})">×</button></td></tr>`).join('')}
     </table>`:'<div class="field-value empty" style="margin-bottom:.75rem">No pricing saved yet.</div>'}
     <div class="stacked-form">
-      <div class="field-group"><div class="form-row-label">Tier / channel</div><input type="text" id="price-tier-${idea.id}" placeholder="e.g. Retail, Wholesale" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Price ($)</div><input type="text" id="price-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" id="price-note-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Tier / channel</div><input type="text" autocomplete="off" id="price-tier-${idea.id}" placeholder="e.g. Retail, Wholesale" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Price ($)</div><input type="text" autocomplete="off" id="price-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><input type="text" autocomplete="off" id="price-note-${idea.id}" onclick="event.stopPropagation()" /></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addPricing('${idea.id}')">Save pricing tier</button></div>
     </div>`;
 
@@ -864,11 +864,11 @@ function ideaCardHTML(idea){
         </div>`).join(''):'<div class="field-value empty" style="margin-bottom:.5rem">None yet.</div>'}
     </div>
     <div class="stacked-form" style="margin-bottom:1.25rem">
-      <div class="field-group"><div class="form-row-label">Name *</div><input type="text" id="mfr-name-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Location</div><input type="text" id="mfr-loc-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Contact / email</div><input type="text" id="mfr-contact-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Website</div><input type="text" id="mfr-url-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><textarea id="mfr-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="field-group"><div class="form-row-label">Name *</div><input type="text" autocomplete="off" id="mfr-name-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Location</div><input type="text" autocomplete="off" id="mfr-loc-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Contact / email</div><input type="text" autocomplete="off" id="mfr-contact-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Website</div><input type="text" autocomplete="off" id="mfr-url-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><textarea autocomplete="off" id="mfr-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addManufacturer('${idea.id}')">Add manufacturer</button></div>
     </div>
     <hr class="section-divider"/>
@@ -882,9 +882,9 @@ function ideaCardHTML(idea){
         </div>`).join(''):'<div class="field-value empty" style="margin-bottom:.5rem">None yet.</div>'}
     </div>
     <div class="stacked-form">
-      <div class="field-group"><div class="form-row-label">Role *</div><input type="text" id="tp-role-${idea.id}" placeholder="e.g. CAD designer, Photographer" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Name / company</div><input type="text" id="tp-name-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><textarea id="tp-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="field-group"><div class="form-row-label">Role *</div><input type="text" autocomplete="off" id="tp-role-${idea.id}" placeholder="e.g. CAD designer, Photographer" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Name / company</div><input type="text" autocomplete="off" id="tp-name-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><textarea autocomplete="off" id="tp-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addThirdParty('${idea.id}')">Add third party</button></div>
     </div>`;
 
@@ -904,15 +904,15 @@ function ideaCardHTML(idea){
         </div>`).join(''):'<div class="field-value empty" style="margin-bottom:.75rem">No file references yet.</div>'}
     </div>
     <div class="stacked-form">
-      <div class="field-group"><div class="form-row-label">Label *</div><input type="text" id="fref-label-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Label *</div><input type="text" autocomplete="off" id="fref-label-${idea.id}" onclick="event.stopPropagation()" /></div>
       <div class="field-group"><div class="form-row-label">Type</div>
         <select id="fref-type-${idea.id}" onclick="event.stopPropagation()">
           <option>CAD File</option><option>3D Print File</option><option>Image</option><option>Document</option><option>Spreadsheet</option><option>Other</option>
         </select>
       </div>
-      <div class="field-group"><div class="form-row-label">URL / link</div><input type="text" id="fref-url-${idea.id}" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Folder reference</div><input type="text" id="fref-loc-${idea.id}" placeholder="e.g. MEGA › Product Specs › v2" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes</div><textarea id="fref-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="field-group"><div class="form-row-label">URL / link</div><input type="text" autocomplete="off" id="fref-url-${idea.id}" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Folder reference</div><input type="text" autocomplete="off" id="fref-loc-${idea.id}" placeholder="e.g. MEGA › Product Specs › v2" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes</div><textarea autocomplete="off" id="fref-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addFileRef('${idea.id}')">Add file reference</button></div>
     </div>`;
 
@@ -1379,7 +1379,7 @@ function openLightbox(ideaId,picIdx){
         <div style="font-size:.6875rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fog);margin-bottom:.3rem">Label</div>
         <input id="lb-label-${ideaId}-${picIdx}" type="text" value="${esc(p.label||'')}" placeholder="Add a label…" style="width:100%;font-family:var(--font-body);font-size:.875rem;padding:.55rem .75rem;border:1px solid var(--border-md);border-radius:var(--radius-md);background:var(--sand);color:var(--kiln);outline:none;margin-bottom:.75rem" />
         <div style="font-size:.6875rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fog);margin-bottom:.3rem">Notes</div>
-        <textarea id="lb-note-${ideaId}-${picIdx}" placeholder="Add notes…" style="width:100%;font-family:var(--font-body);font-size:.875rem;padding:.55rem .75rem;border:1px solid var(--border-md);border-radius:var(--radius-md);background:var(--sand);color:var(--kiln);outline:none;resize:none;min-height:80px;line-height:1.5">${esc(p.note||'')}</textarea>
+        <textarea autocomplete="off" id="lb-note-${ideaId}-${picIdx}" placeholder="Add notes…" style="width:100%;font-family:var(--font-body);font-size:.875rem;padding:.55rem .75rem;border:1px solid var(--border-md);border-radius:var(--radius-md);background:var(--sand);color:var(--kiln);outline:none;resize:none;min-height:80px;line-height:1.5">${esc(p.note||'')}</textarea>
       </div>
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="saveLightboxEdit('${ideaId}',${picIdx})">Save changes</button>
