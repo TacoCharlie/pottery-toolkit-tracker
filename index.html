@@ -833,6 +833,7 @@ function openLightbox(ideaId, picIdx) {
 }
 
 
+function toggleCard(id) { expandedId = expandedId===id?null:id; if(!activeTab[id]) activeTab[id]='overview'; renderList(); }
 function setTab(id,tab) { activeTab[id]=tab; renderList(); }
 function setFilter(f,el) {
   activeFilter=f;
