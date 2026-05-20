@@ -398,6 +398,40 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
   </div>
 </div>
 
+<!-- EDIT VERSION MODAL -->
+<div class="modal-backdrop" id="edit-ver-modal" onclick="if(event.target===this)closeEditVerModal()">
+  <div class="modal">
+    <h2>Edit version</h2>
+    <input type="hidden" id="evm-idea-id"/>
+    <input type="hidden" id="evm-comp-idx"/>
+    <input type="hidden" id="evm-ver-idx"/>
+    <div id="evm-ver-num" style="font-size:.8125rem;color:var(--smoke);margin-bottom:1rem;padding:.5rem .75rem;background:var(--sand);border-radius:var(--rsm)"></div>
+    <div class="fr"><label>Who worked on this?</label><input type="text" autocomplete="off" id="evm-who"/></div>
+    <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Cost to produce this version</div>
+    <div class="f2c">
+      <div class="fr"><label>Filament (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
+      <div class="fr"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="evm-fcp" step="0.01"/></div>
+    </div>
+    <div class="f2c">
+      <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="evm-ph" step="0.5"/></div>
+      <div class="fr"><label>Electricity cost/hr ($)</label><input type="number" autocomplete="off" id="evm-ec" step="0.01"/></div>
+    </div>
+    <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
+    <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="evm-cn"/></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">File reference</div>
+    <div class="fr"><label>Label</label><input type="text" autocomplete="off" id="evm-fl"/></div>
+    <div class="fr"><label>MEGA link or URL</label><input type="text" autocomplete="off" id="evm-fu" placeholder="Paste MEGA shareable link here"/></div>
+    <div class="fac">
+      <button class="btn btn-danger" onclick="deleteVersion()">Delete version</button>
+      <button class="btn btn-ghost" onclick="closeEditVerModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditVersion()">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <script>
 const SUPABASE_URL='https://iepwcjilrzkcogcgdtko.supabase.co';
@@ -598,6 +632,7 @@ function ideaHTML(idea){
                 <span class="vnum">v${esc(v.num)}</span><span class="vdate">${fD(v.date)}</span>
                 ${v.who?`<span class="vwho">${esc(v.who)}</span>`:''}
                 ${vc>0?`<span class="vcost">${fmt$(vc)}</span>`:''}
+                <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="event.stopPropagation();openEditVerModal('${idea.id}',${ci},${vi})">Edit</button>
               </div>
               <div class="vnotes">${esc(v.notes)}</div>
               ${v.cn?`<div style="font-size:.75rem;color:var(--fog);margin-top:.2rem;font-style:italic">${esc(v.cn)}</div>`:''}
@@ -1217,27 +1252,27 @@ async function addThirdParty(id){
 }
 function renderFileRef(r, compact=false){
   if(!r||!r.url)return'';
-  const url=r.url,label=r.label||'',ext=(url.split('?')[0].split('.').pop()||'').toLowerCase();
+  const url=r.url,label=r.label||'';
+  const ext=(url.split('?')[0].split('.').pop()||'').toLowerCase();
   const isImage=['jpg','jpeg','png','gif','webp','svg'].includes(ext);
-  const icons={stl:'🖨',obj:'🖨',step:'🖨',f3d:'🖨',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬',default:'📎'};
-  const icon=icons[ext]||icons.default;
-  if(isImage){
+  const isMega=url.includes('mega.nz')||url.includes('mega.co.nz');
+  const icons={stl:'🖨',obj:'🖨',step:'🖨',f3d:'🖨',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬'};
+  const icon=icons[ext]||'📎';
+  const displayLabel=label||(isMega?'MEGA file':url.split('/').pop().split('?')[0]||'File');
+  const typeLabel=isMega?'MEGA link':(ext?ext.toUpperCase()+' file':'File');
+
+  if(isImage&&!isMega){
     return`<div class="frc">
-      <img src="${esc(url)}" class="frc-img" onerror="this.style.display='none'" onclick="event.stopPropagation();window.open('${esc(url)}','_blank')"/>
-      <div class="frc-info">
-        <div class="frc-label">${esc(label||ext.toUpperCase()+' image')}</div>
-        <div class="frc-meta">${ext.toUpperCase()} · click image to open</div>
-      </div>
+      <img src="${esc(url)}" class="frc-img" onerror="this.parentElement.querySelector('.frc-icon-fb').style.display='flex';this.style.display='none'" onclick="event.stopPropagation();window.open('${esc(url)}','_blank')"/>
+      <div class="frc-icon frc-icon-fb" style="display:none">${icon}</div>
+      <div class="frc-info"><div class="frc-label">${esc(displayLabel)}</div><div class="frc-meta">${typeLabel}</div></div>
       <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open</a>
     </div>`;
   }
   return`<div class="frc">
     <div class="frc-icon">${icon}</div>
-    <div class="frc-info">
-      <div class="frc-label">${esc(label||url.split('/').pop().split('?')[0]||'File')}</div>
-      <div class="frc-meta">${ext?ext.toUpperCase()+' file':'File'}</div>
-    </div>
-    <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open in MEGA</a>
+    <div class="frc-info"><div class="frc-label">${esc(displayLabel)}</div><div class="frc-meta">${typeLabel}</div></div>
+    <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open</a>
   </div>`;
 }
 
@@ -1294,9 +1329,64 @@ function openEditModal(id){
   document.getElementById('f-tags').value=idea.tags||'';
   document.getElementById('modal-backdrop').classList.add('open');
 }
+function openEditVerModal(ideaId,ci,vi){
+  document.getElementById('evm-idea-id').value=ideaId;
+  document.getElementById('evm-comp-idx').value=ci;
+  document.getElementById('evm-ver-idx').value=vi;
+  const idea=ideas.find(i=>i.id===ideaId);
+  const v=(idea.components||[])[ci]?.versions?.[vi];
+  if(!v)return;
+  document.getElementById('evm-ver-num').innerHTML=`Editing <strong style="color:var(--clay)">v${esc(v.num)}</strong>`;
+  document.getElementById('evm-who').value=v.who||'';
+  document.getElementById('evm-notes').value=v.notes||'';
+  document.getElementById('evm-fg').value=v.fg||'';
+  document.getElementById('evm-fcp').value=v.fcp||'';
+  document.getElementById('evm-ph').value=v.ph||'';
+  document.getElementById('evm-ec').value=v.ec||'';
+  document.getElementById('evm-oc').value=v.oc||'';
+  document.getElementById('evm-cn').value=v.cn||'';
+  document.getElementById('evm-fl').value=v.fl||'';
+  document.getElementById('evm-fu').value=v.fu||'';
+  document.getElementById('edit-ver-modal').classList.add('open');
+}
+function closeEditVerModal(){document.getElementById('edit-ver-modal').classList.remove('open');}
+
+async function saveEditVersion(){
+  const notes=document.getElementById('evm-notes').value.trim();
+  if(!notes){document.getElementById('evm-notes').style.borderColor='var(--rd)';showToast('Please describe what changed');return;}
+  const ideaId=document.getElementById('evm-idea-id').value;
+  const ci=parseInt(document.getElementById('evm-comp-idx').value);
+  const vi=parseInt(document.getElementById('evm-ver-idx').value);
+  const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
+  const comp={...components[ci]},versions=[...(comp.versions||[])];
+  versions[vi]={...versions[vi],notes,who:document.getElementById('evm-who').value.trim(),
+    fg:parseFloat(document.getElementById('evm-fg').value)||0,
+    fcp:parseFloat(document.getElementById('evm-fcp').value)||0,
+    ph:parseFloat(document.getElementById('evm-ph').value)||0,
+    ec:parseFloat(document.getElementById('evm-ec').value)||0,
+    oc:parseFloat(document.getElementById('evm-oc').value)||0,
+    cn:document.getElementById('evm-cn').value.trim(),
+    fl:document.getElementById('evm-fl').value.trim(),
+    fu:document.getElementById('evm-fu').value.trim()};
+  comp.versions=versions;components[ci]=comp;
+  if(await patchIdea(ideaId,{components})){closeEditVerModal();renderList();showToast('Version updated');}
+}
+
+async function deleteVersion(){
+  if(!confirm('Delete this version? This cannot be undone.'))return;
+  const ideaId=document.getElementById('evm-idea-id').value;
+  const ci=parseInt(document.getElementById('evm-comp-idx').value);
+  const vi=parseInt(document.getElementById('evm-ver-idx').value);
+  const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
+  const comp={...components[ci]};
+  comp.versions=(comp.versions||[]).filter((_,i)=>i!==vi);
+  components[ci]=comp;
+  if(await patchIdea(ideaId,{components})){closeEditVerModal();renderList();showToast('Version deleted');}
+}
+
 function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');}
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();}
+  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();}
 });
 let toastTimer;
 function showToast(msg){
