@@ -112,6 +112,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
 .vnotes{font-size:.8125rem;color:var(--kiln);margin-top:.35rem;line-height:1.5}
 .vfiles{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem}
 .vft{font-size:.7rem;color:var(--clay-d);background:var(--clay-l);padding:.15rem .5rem;border-radius:100px;text-decoration:none}.vft:hover{text-decoration:underline}
+.frc{background:var(--w);border:1px solid var(--b);border-radius:var(--rsm);padding:.6rem .75rem;display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem}
+.frc-icon{width:38px;height:38px;border-radius:var(--rsm);background:var(--sand-d);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.frc-img{width:56px;height:56px;object-fit:cover;border-radius:var(--rsm);flex-shrink:0;cursor:pointer}
+.frc-info{flex:1;min-width:0}
+.frc-label{font-size:.8125rem;font-weight:500;color:var(--kiln);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frc-meta{font-size:.7rem;color:var(--fog);margin-top:.1rem}
+.frc-open{font-size:.75rem;color:var(--clay);text-decoration:none;white-space:nowrap;flex-shrink:0;font-weight:500;border:1px solid var(--clay-l);padding:.25rem .6rem;border-radius:100px}
+.frc-open:hover{background:var(--clay-l)}
 .iter-list{display:flex;flex-direction:column;gap:1rem;margin-bottom:1rem}
 .iter-card{background:var(--sand);border:1px solid var(--b);border-radius:var(--rlg);overflow:hidden}
 .iter-hdr{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.25rem;cursor:pointer}
@@ -332,8 +340,8 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. 1 failed print, used PLA+"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">File reference (optional)</div>
-    <div class="fr"><label>File label</label><input type="text" autocomplete="off" id="vm-fl" placeholder="e.g. Cutter v3 STL"/></div>
-    <div class="fr"><label>URL or folder path</label><input type="text" autocomplete="off" id="vm-fu" placeholder="https://... or MEGA folder path"/></div>
+    <div class="fr"><label>Label</label><input type="text" autocomplete="off" id="vm-fl" placeholder="e.g. Cutter v3 STL, Back Cutter v2 render"/></div>
+    <div class="fr"><label>MEGA link or URL</label><input type="text" autocomplete="off" id="vm-fu" placeholder="Paste MEGA shareable link here"/></div>
     <div class="fac">
       <button class="btn btn-ghost" onclick="closeVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveVersion()">Log version</button>
@@ -593,7 +601,7 @@ function ideaHTML(idea){
               </div>
               <div class="vnotes">${esc(v.notes)}</div>
               ${v.cn?`<div style="font-size:.75rem;color:var(--fog);margin-top:.2rem;font-style:italic">${esc(v.cn)}</div>`:''}
-              ${v.fl||v.fu?`<div class="vfiles"><a href="${esc(v.fu||'#')}" target="_blank" class="vft">&#128206; ${esc(v.fl||v.fu)}</a></div>`:''}
+              ${v.fu?renderFileRef({label:v.fl||'',url:v.fu},true):''}
             </div>`;}).join('')}</div>`:'<div class="fv empty" style="margin-bottom:1rem">No versions logged yet.</div>'}
             <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openVerModal('${idea.id}',${ci})">+ Log new version</button>
           </div>
@@ -787,20 +795,15 @@ function ideaHTML(idea){
 
   const fileRefs=idea.file_refs||[];
   const filesHTML=`
-    <div style="font-size:.8125rem;color:var(--smoke);margin-bottom:.75rem">Links and references to files in Google Drive, Dropbox, MEGA, etc.</div>
+    <div style="font-size:.8125rem;color:var(--smoke);margin-bottom:.75rem">Add MEGA links or any URL to reference files. Images will preview inline.</div>
     <div class="il">
       ${fileRefs.length?fileRefs.map((r,i)=>`<div class="ic2"><button class="idel" onclick="deleteArrayItem('${idea.id}','file_refs',${i})">x</button>
-        <span class="tag" style="margin-bottom:.3rem;display:inline-block">${esc(r.type||'File')}</span>
-        <div class="im2"><strong>${esc(r.label)}</strong></div>
-        ${r.url?`<a href="${esc(r.url)}" target="_blank" class="ilk" style="font-size:.8rem">&#8599; Open link</a>`:''}
-        ${r.location?`<div class="in2">&#128193; ${esc(r.location)}</div>`:''}
-        ${r.note?`<div class="in2">${esc(r.note)}</div>`:''}</div>`).join(''):'<div class="fv empty" style="margin-bottom:.75rem">No file references yet.</div>'}
+        ${renderFileRef(r)}
+        ${r.note?`<div class="in2" style="margin-top:.35rem">${esc(r.note)}</div>`:''}</div>`).join(''):'<div class="fv empty" style="margin-bottom:.75rem">No file references yet.</div>'}
     </div>
     <div class="sf">
       <div class="fg"><div class="frl">Label *</div><input type="text" autocomplete="off" id="fref-label-${idea.id}" onclick="event.stopPropagation()"/></div>
-      <div class="fg"><div class="frl">Type</div><select id="fref-type-${idea.id}" onclick="event.stopPropagation()"><option>CAD File</option><option>3D Print File</option><option>Image</option><option>Document</option><option>Spreadsheet</option><option>Other</option></select></div>
-      <div class="fg"><div class="frl">URL / link</div><input type="text" autocomplete="off" id="fref-url-${idea.id}" onclick="event.stopPropagation()"/></div>
-      <div class="fg"><div class="frl">Folder reference</div><input type="text" autocomplete="off" id="fref-loc-${idea.id}" placeholder="e.g. MEGA > Specs > v2" onclick="event.stopPropagation()"/></div>
+      <div class="fg"><div class="frl">MEGA link or URL</div><input type="text" autocomplete="off" id="fref-url-${idea.id}" placeholder="Paste MEGA shareable link here" onclick="event.stopPropagation()"/></div>
       <div class="fg"><div class="frl">Notes</div><textarea autocomplete="off" id="fref-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
       <div class="fa"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addFileRef('${idea.id}')">Add file reference</button></div>
     </div>`;
@@ -898,7 +901,7 @@ function buildTimeline(idea){
         <div class="tldate">${fD(v.date)}${v.who?` - ${esc(v.who)}`:''}</div>
         ${vc>0?`<div class="tlchips"><span class="tag">Cost: ${fmt$(vc)}</span></div>`:''}
         ${v.notes?`<div class="tlbody">${esc(v.notes)}</div>`:''}
-        ${v.fl||v.fu?`<div class="tlchips"><a href="${esc(v.fu||'#')}" target="_blank" class="vft">&#128206; ${esc(v.fl||'File')}</a></div>`:''}</div></div>`;
+        ${v.fu?`<div style="margin-top:.4rem">${renderFileRef({label:v.fl||'',url:v.fu},true)}</div>`:''}</div></div>`;
     }else{
       const fb=ev.data;
       return`<div class="tle"><div class="tld db2" style="font-size:.65rem">FB</div><div class="tlc">
@@ -1205,10 +1208,36 @@ async function addThirdParty(id){
   const third_parties=[...(idea.third_parties||[]),{role,name:document.getElementById('tp-name-'+id).value.trim(),note:document.getElementById('tp-note-'+id).value.trim()}];
   if(await patchIdea(id,{third_parties})){renderList();showToast('Third party added');}
 }
+function renderFileRef(r, compact=false){
+  if(!r||!r.url)return'';
+  const url=r.url,label=r.label||'',ext=(url.split('?')[0].split('.').pop()||'').toLowerCase();
+  const isImage=['jpg','jpeg','png','gif','webp','svg'].includes(ext);
+  const icons={stl:'🖨',obj:'🖨',step:'🖨',f3d:'🖨',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬',default:'📎'};
+  const icon=icons[ext]||icons.default;
+  if(isImage){
+    return`<div class="frc">
+      <img src="${esc(url)}" class="frc-img" onerror="this.style.display='none'" onclick="event.stopPropagation();window.open('${esc(url)}','_blank')"/>
+      <div class="frc-info">
+        <div class="frc-label">${esc(label||ext.toUpperCase()+' image')}</div>
+        <div class="frc-meta">${ext.toUpperCase()} · click image to open</div>
+      </div>
+      <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open</a>
+    </div>`;
+  }
+  return`<div class="frc">
+    <div class="frc-icon">${icon}</div>
+    <div class="frc-info">
+      <div class="frc-label">${esc(label||url.split('/').pop().split('?')[0]||'File')}</div>
+      <div class="frc-meta">${ext?ext.toUpperCase()+' file':'File'}</div>
+    </div>
+    <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open in MEGA</a>
+  </div>`;
+}
+
 async function addFileRef(id){
   const label=document.getElementById('fref-label-'+id).value.trim();if(!label)return;
   const idea=ideas.find(i=>i.id===id);
-  const file_refs=[...(idea.file_refs||[]),{label,type:document.getElementById('fref-type-'+id).value,url:document.getElementById('fref-url-'+id).value.trim(),location:document.getElementById('fref-loc-'+id).value.trim(),note:document.getElementById('fref-note-'+id).value.trim()}];
+  const file_refs=[...(idea.file_refs||[]),{label,url:document.getElementById('fref-url-'+id).value.trim(),note:document.getElementById('fref-note-'+id).value.trim()}];
   if(await patchIdea(id,{file_refs})){renderList();showToast('File reference added');}
 }
 async function deleteArrayItem(id,field,idx){
