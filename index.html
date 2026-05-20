@@ -448,14 +448,26 @@ function ideaCardHTML(idea) {
     <div class="item-list">
       ${versions.length ? versions.map((v,i)=>`
         <div class="version-item">
-          <div class="version-header"><span class="version-num">v${esc(v.num)}</span><span class="version-date">${fmtDate(v.date)}</span></div>
-          <div class="version-text">${esc(v.notes)}</div>
+          <div class="version-header">
+            <span class="version-num">v${esc(v.num)}</span>
+            <span class="version-date">${fmtDate(v.date)}</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:.15rem .5rem;font-size:.7rem" onclick="event.stopPropagation();editVersion('${idea.id}',${i})">Edit</button>
+          </div>
+          <div class="version-text" id="ver-text-${idea.id}-${i}">${esc(v.notes)}</div>
+          <div id="ver-edit-${idea.id}-${i}" style="display:none;margin-top:.5rem">
+            <textarea style="width:100%;font-family:var(--font-body);font-size:.8125rem;padding:.5rem;border:1px solid var(--border-md);border-radius:var(--radius-sm);resize:none;min-height:60px" onclick="event.stopPropagation()" id="ver-edit-ta-${idea.id}-${i}">${esc(v.notes)}</textarea>
+            <div style="display:flex;gap:.4rem;margin-top:.35rem">
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();saveVersionEdit('${idea.id}',${i})">Save</button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelVersionEdit('${idea.id}',${i})">Cancel</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','versions',${i})">Delete</button>
+            </div>
+          </div>
         </div>`).join('') : '<div class="field-value empty" style="margin-bottom:.75rem">No versions logged yet.</div>'}
     </div>
     <div class="add-section">
       <div class="add-section-title">Log a new version</div>
       <div class="stacked-form">
-        <div class="field-group"><div class="form-row-label">Version number</div><input type="text" id="ver-num-${idea.id}" placeholder="e.g. 1.0, 1.2, 2.0" onclick="event.stopPropagation()" /></div>
+        <div style="font-size:.8125rem;color:var(--smoke)">Next version: <strong>v${versions.length ? bumpVersion(versions[0].num) : '1.0'}</strong></div>
         <div class="field-group"><div class="form-row-label">What changed?</div><textarea id="ver-notes-${idea.id}" placeholder="Describe the changes in this version…" onclick="event.stopPropagation()"></textarea></div>
         <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addVersion('${idea.id}')">Log version</button></div>
       </div>
@@ -495,14 +507,20 @@ function ideaCardHTML(idea) {
         ondragover="event.stopPropagation();event.preventDefault();this.classList.add('drag-over')"
         ondragleave="event.stopPropagation();this.classList.remove('drag-over')"
         ondrop="event.stopPropagation();event.preventDefault();this.classList.remove('drag-over');handleDrop(this.dataset.id,event)" data-id="${idea.id}">
-        <input type="file" id="img-upload-${idea.id}" accept="image/*" onchange="handleImageUpload('${idea.id}',this)" onclick="event.stopPropagation()" />
+        <input type="file" id="img-upload-${idea.id}" accept="image/*" onchange="previewImage('${idea.id}',this)" onclick="event.stopPropagation()" />
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p>Drag & drop or click to upload</p>
+        <p>Drag & drop or click to select</p>
         <p style="font-size:.75rem;color:var(--fog)">JPG, PNG, WEBP supported</p>
+      </div>
+      <div id="img-preview-wrap-${idea.id}" style="display:none">
+        <img id="img-preview-${idea.id}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-md);margin-top:.5rem;display:block" />
+        <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="event.stopPropagation();clearImagePreview('${idea.id}')">✕ Remove</button>
       </div>
       <div id="img-upload-status-${idea.id}" class="upload-progress" style="display:none"></div>
       <div class="field-group"><div class="form-row-label">Label (optional)</div><input type="text" id="pic-label-${idea.id}" placeholder="e.g. Reference glaze texture" onclick="event.stopPropagation()" /></div>
       <div class="field-group"><div class="form-row-label">Notes (optional)</div><textarea id="pic-note-${idea.id}" placeholder="What's interesting about this image?" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();submitImageUpload('${idea.id}')">Upload image</button></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:.5rem 0"/>
       <p style="font-size:.75rem;color:var(--fog)">Or add by URL instead:</p>
       <div class="field-group"><input type="text" id="pic-url-${idea.id}" placeholder="https://… (image URL)" onclick="event.stopPropagation()" /></div>
       <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addInspirationPicByUrl('${idea.id}')">Add by URL</button></div>
@@ -510,33 +528,76 @@ function ideaCardHTML(idea) {
 
   // FINANCIALS
   const costs = idea.costs || [];
+  const setupCosts = costs.filter(c=>c.type==='setup');
+  const unitCosts = costs.filter(c=>c.type==='unit');
+  const totalSetup = setupCosts.reduce((s,c)=>s+parseFloat(c.cost||0),0);
+  const totalUnit = unitCosts.reduce((s,c)=>s+parseFloat(c.cost||0),0);
   const pricing = idea.pricing || [];
-  const financialsTab = `
-    <div class="add-section-title" style="margin-bottom:.5rem">Cost breakdown</div>
-    ${costs.length ? `
+
+  const costTable = (items, field) => items.length ? `
     <table class="data-table">
       <tr><th>Item</th><th>Cost</th><th>Notes</th><th></th></tr>
-      ${costs.map((c,i)=>`<tr><td>${esc(c.item)}</td><td>$${esc(c.cost)}</td><td>${esc(c.note||'')}</td><td><button class="del-btn" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','costs',${i})">×</button></td></tr>`).join('')}
-      <tr><td colspan="2" style="font-weight:500;font-size:.8rem">Total</td><td style="font-weight:600;color:var(--clay)">$${costs.reduce((s,c)=>s+parseFloat(c.cost||0),0).toFixed(2)}</td><td></td></tr>
-    </table>` : '<div class="field-value empty" style="margin-bottom:.75rem">No costs added yet.</div>'}
+      ${items.map((c,i)=>{
+        const realIdx = costs.indexOf(c);
+        return `<tr><td>${esc(c.item)}</td><td>$${esc(c.cost)}</td><td>${esc(c.note||'')}</td><td><button class="del-btn" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','costs',${realIdx})">×</button></td></tr>`;
+      }).join('')}
+    </table>` : '<div class="field-value empty" style="margin-bottom:.5rem">None added yet.</div>';
+
+  const financialsTab = `
+    <div class="add-section-title" style="margin-bottom:.25rem">Setup / one-time costs</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.5rem">Tooling, moulds, design fees — paid once</div>
+    ${costTable(setupCosts,'setup')}
     <div class="stacked-form" style="margin-bottom:1.25rem">
-      <div class="field-group"><div class="form-row-label">Cost item</div><input type="text" id="cost-item-${idea.id}" placeholder="e.g. Tooling, materials, packaging" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Estimated amount ($)</div><input type="text" id="cost-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
-      <div class="field-group"><div class="form-row-label">Notes (optional)</div><input type="text" id="cost-note-${idea.id}" placeholder="Any additional context" onclick="event.stopPropagation()" /></div>
-      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}')">Add cost</button></div>
+      <div class="field-group"><div class="form-row-label">Item</div><input type="text" id="cost-setup-item-${idea.id}" placeholder="e.g. Tooling, mould, CAD design" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" id="cost-setup-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes (optional)</div><input type="text" id="cost-setup-note-${idea.id}" placeholder="" onclick="event.stopPropagation()" /></div>
+      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','setup')">Add setup cost</button></div>
     </div>
     <hr class="section-divider"/>
-    <div class="add-section-title" style="margin-bottom:.5rem">Pricing strategy</div>
+    <div class="add-section-title" style="margin-bottom:.25rem">Manufacturing / per-unit costs</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.5rem">Materials, labour, packaging — per unit produced</div>
+    ${costTable(unitCosts,'unit')}
+    <div class="stacked-form" style="margin-bottom:1.25rem">
+      <div class="field-group"><div class="form-row-label">Item</div><input type="text" id="cost-unit-item-${idea.id}" placeholder="e.g. Materials, labour, packaging" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Amount ($)</div><input type="text" id="cost-unit-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
+      <div class="field-group"><div class="form-row-label">Notes (optional)</div><input type="text" id="cost-unit-note-${idea.id}" placeholder="" onclick="event.stopPropagation()" /></div>
+      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','unit')">Add unit cost</button></div>
+    </div>
+    ${totalUnit>0 ? `<div style="background:var(--sand);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.8125rem">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--smoke)">Total per-unit cost</span><strong>$${totalUnit.toFixed(2)}</strong></div>
+      ${totalSetup>0?`<div style="display:flex;justify-content:space-between;margin-top:.25rem"><span style="color:var(--smoke)">Total setup cost</span><strong>$${totalSetup.toFixed(2)}</strong></div>`:''}
+    </div>`:''}
+    <hr class="section-divider"/>
+    <div class="add-section-title" style="margin-bottom:.5rem">Pricing calculator</div>
+    ${totalUnit>0 ? `
+    <div style="background:var(--sand);border-radius:var(--radius-md);padding:.875rem 1rem;margin-bottom:1rem">
+      <div class="field-label" style="margin-bottom:.4rem">Price based on unit cost multiplier</div>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+        <select id="multiplier-${idea.id}" onchange="event.stopPropagation();updateMultiplierPrice('${idea.id}')" onclick="event.stopPropagation()" style="padding:.4rem .6rem;border:1px solid var(--border-md);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:.8125rem;background:var(--white)">
+          <option value="">Select multiplier…</option>
+          <option value="2">2× cost</option>
+          <option value="2.5">2.5× cost</option>
+          <option value="3">3× cost</option>
+          <option value="3.5">3.5× cost</option>
+          <option value="4">4× cost</option>
+          <option value="4.5">4.5× cost</option>
+          <option value="5">5× cost</option>
+          <option value="5.5">5.5× cost</option>
+          <option value="6">6× cost</option>
+        </select>
+        <div id="multiplier-result-${idea.id}" style="font-size:.875rem;color:var(--kiln)"></div>
+      </div>
+    </div>` : '<div class="field-value empty" style="margin-bottom:.75rem">Add per-unit costs above to use the pricing calculator.</div>'}
     ${pricing.length ? `
     <table class="data-table">
-      <tr><th>Tier / channel</th><th>Price</th><th>Notes</th><th>Margin</th><th></th></tr>
-      ${pricing.map((p,i)=>`<tr><td>${esc(p.tier)}</td><td>$${esc(p.price)}</td><td>${esc(p.note||'')}</td><td>${costs.length&&p.price?calcMargin(costs,p.price):'—'}</td><td><button class="del-btn" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','pricing',${i})">×</button></td></tr>`).join('')}
-    </table>` : '<div class="field-value empty" style="margin-bottom:.75rem">No pricing added yet.</div>'}
+      <tr><th>Tier / channel</th><th>Price</th><th>Notes</th><th>Margin on unit cost</th><th></th></tr>
+      ${pricing.map((p,i)=>`<tr><td>${esc(p.tier)}</td><td>$${esc(p.price)}</td><td>${esc(p.note||'')}</td><td>${totalUnit&&p.price?calcMargin(totalUnit,p.price):'—'}</td><td><button class="del-btn" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','pricing',${i})">×</button></td></tr>`).join('')}
+    </table>` : '<div class="field-value empty" style="margin-bottom:.75rem">No pricing saved yet.</div>'}
     <div class="stacked-form">
       <div class="field-group"><div class="form-row-label">Tier / channel</div><input type="text" id="price-tier-${idea.id}" placeholder="e.g. Retail, Wholesale, Direct" onclick="event.stopPropagation()" /></div>
       <div class="field-group"><div class="form-row-label">Price ($)</div><input type="text" id="price-amt-${idea.id}" placeholder="0.00" onclick="event.stopPropagation()" /></div>
       <div class="field-group"><div class="form-row-label">Notes (optional)</div><input type="text" id="price-note-${idea.id}" placeholder="e.g. Includes shipping, MSRP" onclick="event.stopPropagation()" /></div>
-      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addPricing('${idea.id}')">Add pricing</button></div>
+      <div class="form-actions"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addPricing('${idea.id}')">Save pricing tier</button></div>
     </div>`;
 
   // PRODUCTION
@@ -669,8 +730,8 @@ function ideaCardHTML(idea) {
   </div>`;
 }
 
-function calcMargin(costs, price) {
-  const total = costs.reduce((s,c)=>s+parseFloat(c.cost||0),0);
+function calcMargin(unitTotal, price) {
+  const total = typeof unitTotal === 'number' ? unitTotal : unitTotal.reduce((s,c)=>s+parseFloat(c.cost||0),0);
   if (!total||!price) return '—';
   return ((parseFloat(price)-total)/parseFloat(price)*100).toFixed(0)+'%';
 }
@@ -689,12 +750,51 @@ async function addNote(id) {
 }
 
 async function addVersion(id) {
-  const num = document.getElementById('ver-num-'+id).value.trim();
   const notes = document.getElementById('ver-notes-'+id).value.trim();
-  if (!num||!notes) return;
+  if (!notes) return;
   const idea = ideas.find(i=>i.id===id);
+  const num = idea.versions && idea.versions.length ? bumpVersion(idea.versions[0].num) : '1.0';
   const versions = [{num,notes,date:new Date().toISOString()},...(idea.versions||[])];
   if (await patchIdea(id,{versions})) { renderList(); showToast('Version logged'); }
+}
+
+function bumpVersion(v) {
+  const parts = String(v||'1.0').split('.');
+  const minor = parseInt(parts[1]||0) + 1;
+  if (minor > 9) return (parseInt(parts[0]||1)+1)+'.0';
+  return parts[0]+'.'+minor;
+}
+
+function editVersion(ideaId, idx) {
+  document.getElementById('ver-text-'+ideaId+'-'+idx).style.display='none';
+  document.getElementById('ver-edit-'+ideaId+'-'+idx).style.display='block';
+}
+
+function cancelVersionEdit(ideaId, idx) {
+  document.getElementById('ver-text-'+ideaId+'-'+idx).style.display='block';
+  document.getElementById('ver-edit-'+ideaId+'-'+idx).style.display='none';
+}
+
+async function saveVersionEdit(ideaId, idx) {
+  const newNotes = document.getElementById('ver-edit-ta-'+ideaId+'-'+idx).value.trim();
+  if (!newNotes) return;
+  const idea = ideas.find(i=>i.id===ideaId);
+  const versions = [...(idea.versions||[])];
+  versions[idx] = {...versions[idx], notes: newNotes};
+  if (await patchIdea(ideaId,{versions})) { renderList(); showToast('Version updated'); }
+}
+
+function updateMultiplierPrice(id) {
+  const sel = document.getElementById('multiplier-'+id);
+  const result = document.getElementById('multiplier-result-'+id);
+  const idea = ideas.find(i=>i.id===id);
+  if (!sel||!result||!idea) return;
+  const mult = parseFloat(sel.value);
+  if (!mult) { result.textContent=''; return; }
+  const unitTotal = (idea.costs||[]).filter(c=>c.type==='unit').reduce((s,c)=>s+parseFloat(c.cost||0),0);
+  const price = (unitTotal * mult).toFixed(2);
+  result.innerHTML = `= <strong style="color:var(--clay)">$${price}</strong> <span style="color:var(--fog);font-size:.75rem">(${((mult-1)/mult*100).toFixed(0)}% margin)</span>`;
+  document.getElementById('price-amt-'+id).value = price;
 }
 
 async function addInspirationLink(id) {
@@ -706,23 +806,58 @@ async function addInspirationLink(id) {
   if (await patchIdea(id,{inspiration_links})) { renderList(); showToast('Link added'); }
 }
 
-async function handleDrop(id, event) {
-  const file = event.dataTransfer.files[0];
-  if (!file) return;
-  await handleImageUpload(id, { files: [file] });
+// stores pending file per idea
+const pendingFiles = {};
+
+function previewImage(id, input) {
+  const file = input.files[0]; if (!file) return;
+  pendingFiles[id] = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('img-preview-'+id);
+    const wrap = document.getElementById('img-preview-wrap-'+id);
+    if (preview) { preview.src = e.target.result; wrap.style.display='block'; }
+  };
+  reader.readAsDataURL(file);
 }
 
-async function handleImageUpload(id, input) {
-  const file = input.files[0]; if (!file) return;
+function clearImagePreview(id) {
+  delete pendingFiles[id];
+  const wrap = document.getElementById('img-preview-wrap-'+id);
+  const input = document.getElementById('img-upload-'+id);
+  if (wrap) wrap.style.display='none';
+  if (input) input.value='';
+}
+
+async function handleDrop(id, event) {
+  const file = event.dataTransfer.files[0]; if (!file) return;
+  pendingFiles[id] = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('img-preview-'+id);
+    const wrap = document.getElementById('img-preview-wrap-'+id);
+    if (preview) { preview.src = e.target.result; wrap.style.display='block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitImageUpload(id) {
+  const file = pendingFiles[id];
+  if (!file) { showToast('Please select an image first'); return; }
   const status = document.getElementById('img-upload-status-'+id);
-  status.style.display='block'; status.textContent='Uploading…';
+  if (status) { status.style.display='block'; status.textContent='Uploading…'; }
   const url = await uploadImage(id, file);
-  if (!url) { status.textContent='Upload failed.'; return; }
+  if (!url) { if (status) status.textContent='Upload failed.'; return; }
   const label = document.getElementById('pic-label-'+id).value.trim();
   const note = document.getElementById('pic-note-'+id).value.trim();
   const idea = ideas.find(i=>i.id===id);
   const inspiration_pics = [...(idea.inspiration_pics||[]),{url,label,note}];
-  if (await patchIdea(id,{inspiration_pics})) { status.style.display='none'; renderList(); showToast('Image uploaded'); }
+  if (await patchIdea(id,{inspiration_pics})) {
+    delete pendingFiles[id];
+    if (status) status.style.display='none';
+    renderList();
+    showToast('Image uploaded');
+  }
 }
 
 async function addInspirationPicByUrl(id) {
@@ -734,13 +869,13 @@ async function addInspirationPicByUrl(id) {
   if (await patchIdea(id,{inspiration_pics})) { renderList(); showToast('Image added'); }
 }
 
-async function addCost(id) {
-  const item = document.getElementById('cost-item-'+id).value.trim();
-  const cost = document.getElementById('cost-amt-'+id).value.trim();
+async function addCost(id, type) {
+  const item = document.getElementById('cost-'+type+'-item-'+id).value.trim();
+  const cost = document.getElementById('cost-'+type+'-amt-'+id).value.trim();
   if (!item||!cost) return;
-  const note = document.getElementById('cost-note-'+id).value.trim();
+  const note = document.getElementById('cost-'+type+'-note-'+id).value.trim();
   const idea = ideas.find(i=>i.id===id);
-  const costs = [...(idea.costs||[]),{item,cost,note}];
+  const costs = [...(idea.costs||[]),{item,cost,note,type}];
   if (await patchIdea(id,{costs})) { renderList(); showToast('Cost added'); }
 }
 
