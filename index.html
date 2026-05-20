@@ -983,7 +983,14 @@ function openVerModal(ideaId,ci){
 function closeVerModal(){document.getElementById('ver-modal').classList.remove('open');}
 
 async function saveVersion(){
-  const notes=document.getElementById('vm-notes').value.trim();if(!notes)return;
+  const notes=document.getElementById('vm-notes').value.trim();
+  if(!notes){
+    document.getElementById('vm-notes').style.borderColor='var(--rd)';
+    document.getElementById('vm-notes').focus();
+    showToast('Please describe what changed');
+    return;
+  }
+  document.getElementById('vm-notes').style.borderColor='';
   const ideaId=document.getElementById('vm-idea-id').value;
   const ci=parseInt(document.getElementById('vm-comp-idx').value);
   const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])],comp={...components[ci]};
