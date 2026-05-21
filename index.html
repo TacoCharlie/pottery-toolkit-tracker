@@ -304,7 +304,21 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <input type="hidden" id="cm-idea-id"/><input type="hidden" id="cm-idx"/>
     <div class="fr"><label>Name *</label><input type="text" autocomplete="off" id="cm-name" placeholder="e.g. Vase Form, Cutter, Back Cutter"/></div>
     <div class="fr"><label>Description</label><textarea autocomplete="off" id="cm-desc" placeholder="What does this component do?" style="min-height:60px"></textarea></div>
-    <div class="fr"><label>Reference image URL (optional)</label><input type="text" autocomplete="off" id="cm-img" placeholder="https://..."/></div>
+    <div class="fr"><label>Reference image</label>
+      <div id="cm-img-current" style="margin-bottom:.5rem"></div>
+      <div class="upload-area" onclick="event.stopPropagation();document.getElementById('cm-img-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="event.preventDefault();this.classList.remove('drag-over');handleCompImgDrop(event)">
+        <input type="file" id="cm-img-input" accept="image/*" onchange="previewCompImg(this)"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p>Drag & drop or click to add a reference image</p>
+      </div>
+      <div id="cm-img-preview-wrap" style="display:none;margin-top:.5rem">
+        <img id="cm-img-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--rmd);display:block"/>
+        <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="clearCompImg()">Remove</button>
+      </div>
+    </div>
     <div class="fr"><label>Shared / universal component?</label>
       <select id="cm-shared">
         <option value="no">No - specific to this product</option>
@@ -599,7 +613,7 @@ function iterTotal(iter,components){
 }
 
 function fmt$(n){return'$'+parseFloat(n||0).toFixed(2);}
-function bumpV(v){const p=String(v||'1.0').split('.');const m=parseInt(p[1]||0)+1;return m>9?(parseInt(p[0]||1)+1)+'.0':p[0]+'.'+m;}
+function bumpV(v){return String((parseInt(String(v||'0').replace(/[^0-9]/g,''))||0)+1);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fD(iso){return iso?new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}
 function fDT(iso){return iso?new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):''}
@@ -1025,6 +1039,32 @@ function updateMult(id){
   const pa=document.getElementById('price-amt-'+id);if(pa)pa.value=price;
 }
 
+function previewCompImg(input){
+  const file=input.files[0];if(!file)return;
+  pendingVerFiles['cm-img']=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById('cm-img-preview'),w=document.getElementById('cm-img-preview-wrap');
+    if(p){p.src=e.target.result;w.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+function clearCompImg(){
+  delete pendingVerFiles['cm-img'];
+  const w=document.getElementById('cm-img-preview-wrap'),i=document.getElementById('cm-img-input');
+  if(w)w.style.display='none';if(i)i.value='';
+}
+function handleCompImgDrop(event){
+  const file=event.dataTransfer.files[0];if(!file)return;
+  pendingVerFiles['cm-img']=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById('cm-img-preview'),w=document.getElementById('cm-img-preview-wrap');
+    if(p){p.src=e.target.result;w.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+
 function openCompModal(ideaId,editIdx){
   document.getElementById('cm-idea-id').value=ideaId;
   document.getElementById('cm-idx').value=editIdx!==undefined?editIdx:'';
@@ -1034,13 +1074,16 @@ function openCompModal(ideaId,editIdx){
     document.getElementById('cm-save-btn').textContent='Save changes';
     document.getElementById('cm-name').value=c.name||'';
     document.getElementById('cm-desc').value=c.desc||'';
-    document.getElementById('cm-img').value=c.img||'';
     document.getElementById('cm-shared').value=c.shared?'yes':'no';
+    const cur=document.getElementById('cm-img-current');
+    if(cur)cur.innerHTML=c.img?`<img src="${esc(c.img)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--rmd);display:block;margin-bottom:.4rem" onerror="this.style.display='none'"/>`:'';
   }else{
     document.getElementById('comp-modal-title').textContent='Add component';
     document.getElementById('cm-save-btn').textContent='Add component';
-    ['cm-name','cm-desc','cm-img'].forEach(id=>document.getElementById(id).value='');
+    ['cm-name','cm-desc'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('cm-shared').value='no';
+    clearCompImg();
+    const cur=document.getElementById('cm-img-current');if(cur)cur.innerHTML='';
   }
   document.getElementById('comp-modal').classList.add('open');
   setTimeout(()=>document.getElementById('cm-name').focus(),50);
@@ -1052,14 +1095,23 @@ async function saveComponent(){
   const ideaId=document.getElementById('cm-idea-id').value;
   const editIdx=document.getElementById('cm-idx').value;
   const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
+  const existing=editIdx!==''?components[parseInt(editIdx)]:{};
+
+  let img=existing.img||'';
+  const imgFile=pendingVerFiles['cm-img'];
+  if(imgFile){img=await uploadImage(ideaId,imgFile)||img;}
+
   const comp={name,desc:document.getElementById('cm-desc').value.trim(),
-    img:document.getElementById('cm-img').value.trim(),
+    img,
     shared:document.getElementById('cm-shared').value==='yes',
-    final:editIdx!==''?(components[parseInt(editIdx)]?.final||false):false,
-    versions:editIdx!==''?(components[parseInt(editIdx)]?.versions||[]):[],
+    final:editIdx!==''?(existing.final||false):false,
+    versions:editIdx!==''?(existing.versions||[]):[],
   };
   if(editIdx!=='')components[parseInt(editIdx)]=comp;else components.push(comp);
-  if(await patchIdea(ideaId,{components})){closeCompModal();renderList();showToast(editIdx!==''?'Component updated':'Component added');}
+  if(await patchIdea(ideaId,{components})){
+    delete pendingVerFiles['cm-img'];
+    closeCompModal();renderList();showToast(editIdx!==''?'Component updated':'Component added');
+  }
 }
 
 async function toggleCompFinal(ideaId,ci,isFinal){
@@ -1073,7 +1125,7 @@ function openVerModal(ideaId,ci){
   document.getElementById('vm-idea-id').value=ideaId;
   document.getElementById('vm-comp-idx').value=ci;
   const idea=ideas.find(i=>i.id===ideaId),comp=(idea.components||[])[ci],versions=comp?.versions||[];
-  const nextNum=versions.length?bumpV(versions[0].num):'1.0';
+  const nextNum=versions.length?bumpV(versions[0].num):'1';
   document.getElementById('ver-modal-title').textContent='Log version - '+(comp?.name||'Component');
   document.getElementById('vm-next-num').innerHTML=`Next version: <strong style="color:var(--clay)">v${nextNum}</strong>`;
   ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-ec','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
@@ -1245,7 +1297,7 @@ function renderPendingImgs(prefix){
 function renderPendingFiles(prefix){
   const list=document.getElementById(prefix+'-files-list');if(!list)return;
   const files=pendingVerFiles[prefix+'-files']||[];
-  const icons={stl:'🖨',obj:'🖨',step:'🖨',stp:'🖨',f3d:'🖨','3mf':'🖨',pdf:'📄',zip:'📦',dxf:'📐'};
+  const icons={stl:'🧊',obj:'🧊',step:'📐',stp:'📐',f3d:'🧊','3mf':'🧊',pdf:'📄',zip:'📦',dxf:'📐'};
   list.innerHTML=files.map((f,i)=>{
     const ext=(f.file.name.split('.').pop()||'').toLowerCase();
     return`<div class="frc" style="margin-bottom:.35rem">
@@ -1515,7 +1567,7 @@ function renderFileRef(r, compact=false){
   const ext=(url.split('?')[0].split('.').pop()||'').toLowerCase();
   const isImage=['jpg','jpeg','png','gif','webp','svg'].includes(ext);
   const isMega=url.includes('mega.nz')||url.includes('mega.co.nz');
-  const icons={stl:'🖨',obj:'🖨',step:'🖨',f3d:'🖨',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬'};
+  const icons={stl:'🧊',obj:'🧊',step:'📐',stp:'📐',f3d:'🧊','3mf':'🧊',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬'};
   const icon=icons[ext]||'📎';
   const displayLabel=label||(isMega?'MEGA file':url.split('/').pop().split('?')[0]||'File');
   const typeLabel=isMega?'MEGA link':(ext?ext.toUpperCase()+' file':'File');
