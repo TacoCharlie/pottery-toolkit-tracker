@@ -233,10 +233,16 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
 <div id="app">
   <header class="topbar">
     <div class="topbar-brand">The Pottery Toolkit <span>Product Tracker</span></div>
-    <button class="btn btn-primary" onclick="openModal()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New idea
-    </button>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Settings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+      <button class="btn btn-primary" onclick="openModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New idea
+      </button>
+    </div>
   </header>
   <main class="main">
     <div class="stats-grid" id="stats-grid"></div>
@@ -347,9 +353,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       <div class="fr"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="vm-fcp" placeholder="0.00" step="0.01"/></div>
     </div>
     <div class="f2c">
-      <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="vm-ph" placeholder="0" step="0.5"/></div>
-      <div class="fr"><label>Electricity cost/hr ($)</label><input type="number" autocomplete="off" id="vm-ec" placeholder="0.00" step="0.01"/></div>
+      <div class="fr"><label>Equipment used</label>
+        <select id="vm-equipment" onchange="calcVerElectricity('vm')">
+          <option value="">Select equipment...</option>
+        </select>
+      </div>
+      <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="vm-ph" placeholder="0" step="0.5" oninput="calcVerElectricity('vm')"/></div>
     </div>
+    <div id="vm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. 1 failed print, used PLA+"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -454,7 +465,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <input type="hidden" id="evm-idea-id"/>
     <input type="hidden" id="evm-comp-idx"/>
     <input type="hidden" id="evm-ver-idx"/>
-    <div id="evm-ver-num" style="font-size:.8125rem;color:var(--smoke);margin-bottom:1rem;padding:.5rem .75rem;background:var(--sand);border-radius:var(--rsm)"></div>
+    <div class="fr"><label>Version number</label><input type="text" autocomplete="off" id="evm-ver-num" placeholder="e.g. 1, 2, 3"/></div>
     <div class="fr"><label>Who worked on this?</label><input type="text" autocomplete="off" id="evm-who"/></div>
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -464,9 +475,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       <div class="fr"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="evm-fcp" step="0.01"/></div>
     </div>
     <div class="f2c">
+      <div class="fr"><label>Equipment used</label>
+        <select id="evm-equipment" onchange="calcVerElectricity('evm')">
+          <option value="">Select equipment...</option>
+        </select>
+      </div>
       <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="evm-ph" step="0.5"/></div>
-      <div class="fr"><label>Electricity cost/hr ($)</label><input type="number" autocomplete="off" id="evm-ec" step="0.01"/></div>
     </div>
+    <div id="evm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="evm-cn"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -496,6 +512,45 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       <button class="btn btn-danger" onclick="deleteVersion()">Delete version</button>
       <button class="btn btn-ghost" onclick="closeEditVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditVersion()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal mlg">
+    <h2>Settings</h2>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Electricity</div>
+    <div class="fr"><label>Cost per kWh ($)</label>
+      <input type="number" autocomplete="off" id="s-kwh" placeholder="e.g. 0.14" step="0.001"/>
+      <div style="font-size:.75rem;color:var(--fog);margin-top:.35rem">Check your electricity bill for your rate. Used to calculate print costs automatically.</div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1.25rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Equipment</div>
+    <div id="settings-equipment-list" style="margin-bottom:1rem"></div>
+    <div style="background:var(--sand);border-radius:var(--rmd);padding:1rem;margin-bottom:1rem">
+      <div style="font-size:.75rem;font-weight:600;color:var(--smoke);margin-bottom:.75rem">Add equipment</div>
+      <div class="f2c">
+        <div class="fr"><label>Name</label><input type="text" autocomplete="off" id="eq-name" placeholder="e.g. Elegoo Centauri Carbon"/></div>
+        <div class="fr"><label>Type</label>
+          <select id="eq-type">
+            <option value="3dprinter">3D Printer</option>
+            <option value="kiln">Kiln</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="f2c">
+        <div class="fr"><label>Power draw (watts)</label><input type="number" autocomplete="off" id="eq-watts" placeholder="e.g. 200"/></div>
+        <div class="fr"><label>Notes</label><input type="text" autocomplete="off" id="eq-notes" placeholder="Optional"/></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="addEquipment()">Add equipment</button>
+      </div>
+    </div>
+    <div class="fac">
+      <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
     </div>
   </div>
 </div>
@@ -542,7 +597,7 @@ async function loadIdeas(){
   document.getElementById('ideas-grid').innerHTML='<div style="padding:3rem;text-align:center;color:var(--fog);font-size:.875rem">Loading...</div>';
   const {data,error}=await db.from('ideas').select('*').order('created_at',{ascending:false});
   if(error){showToast('Error: '+error.message);return;}
-  ideas=data||[];render();
+  ideas=data||[];await loadSettings();render();
 }
 
 async function saveIdea(){
@@ -1136,6 +1191,7 @@ function openVerModal(ideaId,ci){
   ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-ec','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
+  populateEquipmentDropdowns();
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
 function closeVerModal(){document.getElementById('ver-modal').classList.remove('open');}
@@ -1160,7 +1216,8 @@ async function saveVersion(){
     fg:parseFloat(document.getElementById('vm-fg').value)||0,
     fcp:parseFloat(document.getElementById('vm-fcp').value)||0,
     ph:parseFloat(document.getElementById('vm-ph').value)||0,
-    ec:parseFloat(document.getElementById('vm-ec').value)||0,
+    ec:getCalcElecCost('vm'),
+    equipmentId:document.getElementById('vm-equipment').value,
     oc:parseFloat(document.getElementById('vm-oc').value)||0,
     cn:document.getElementById('vm-cn').value.trim(),
     images,files});
@@ -1610,6 +1667,99 @@ async function deleteIdea(id){
   ideas=ideas.filter(i=>i.id!==id);if(expandedId===id)expandedId=null;render();showToast('Idea deleted');
 }
 
+// SETTINGS
+let appSettings={cost_per_kwh:0,equipment:[]};
+
+async function loadSettings(){
+  const {data,error}=await db.from('settings').select('*').eq('id','global').single();
+  if(!error&&data){
+    appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[]};
+  }
+}
+
+async function saveSettings(){
+  const kwh=parseFloat(document.getElementById('s-kwh').value)||0;
+  const {error}=await db.from('settings').upsert({id:'global',cost_per_kwh:kwh,equipment:appSettings.equipment,updated_at:new Date().toISOString()});
+  if(error){showToast('Error saving settings');return;}
+  appSettings.cost_per_kwh=kwh;
+  closeSettings();showToast('Settings saved');
+}
+
+async function addEquipment(){
+  const name=document.getElementById('eq-name').value.trim();
+  const watts=parseFloat(document.getElementById('eq-watts').value)||0;
+  if(!name||!watts){showToast('Please enter a name and wattage');return;}
+  appSettings.equipment=[...(appSettings.equipment||[]),{
+    id:Date.now().toString(),
+    name,type:document.getElementById('eq-type').value,
+    watts,notes:document.getElementById('eq-notes').value.trim()
+  }];
+  ['eq-name','eq-watts','eq-notes'].forEach(id=>document.getElementById(id).value='');
+  renderEquipmentList();
+}
+
+function removeEquipment(idx){
+  appSettings.equipment=(appSettings.equipment||[]).filter((_,i)=>i!==idx);
+  renderEquipmentList();
+}
+
+function renderEquipmentList(){
+  const list=document.getElementById('settings-equipment-list');if(!list)return;
+  const eq=appSettings.equipment||[];
+  if(!eq.length){list.innerHTML='<div class="fv empty" style="margin-bottom:.5rem">No equipment added yet.</div>';return;}
+  const typeLabel={3dprinter:'3D Printer',kiln:'Kiln',other:'Other'};
+  list.innerHTML=eq.map((e,i)=>`
+    <div class="frc" style="margin-bottom:.4rem">
+      <div class="frc-icon">${e.type==='3dprinter'?'🖨️':e.type==='kiln'?'🔥':'⚙️'}</div>
+      <div class="frc-info">
+        <div class="frc-label">${esc(e.name)}</div>
+        <div class="frc-meta">${typeLabel[e.type]||'Other'} · ${e.watts}W${e.notes?' · '+esc(e.notes):''}</div>
+      </div>
+      <button class="btn btn-danger btn-xs" onclick="removeEquipment(${i})">Remove</button>
+    </div>`).join('');
+}
+
+function openSettings(){
+  document.getElementById('s-kwh').value=appSettings.cost_per_kwh||'';
+  renderEquipmentList();
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+
+function populateEquipmentDropdowns(){
+  ['vm-equipment','evm-equipment'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const current=sel.value;
+    sel.innerHTML='<option value="">Select equipment...</option>'+
+      (appSettings.equipment||[]).map(e=>`<option value="${esc(e.id)}">${esc(e.name)} (${e.watts}W)</option>`).join('');
+    if(current)sel.value=current;
+  });
+}
+
+function calcVerElectricity(prefix){
+  const sel=document.getElementById(prefix+'-equipment');
+  const phEl=document.getElementById(prefix+'-ph');
+  const calcEl=document.getElementById(prefix+'-elec-calc');
+  if(!sel||!phEl||!calcEl)return;
+  const eqId=sel.value;
+  const hours=parseFloat(phEl.value)||0;
+  const eq=(appSettings.equipment||[]).find(e=>e.id===eqId);
+  const kwh=appSettings.cost_per_kwh||0;
+  if(!eq||!hours||!kwh){calcEl.style.display='none';return;}
+  const cost=(hours*eq.watts/1000*kwh);
+  calcEl.style.display='block';
+  calcEl.innerHTML=`<strong>${hours}h × ${eq.watts}W ÷ 1000 × $${kwh}/kWh = <span style="color:var(--clay)">${fmt$(cost)}</span></strong> electricity cost`;
+  // Store calculated value on a hidden field
+  let hidden=document.getElementById(prefix+'-ec-calc');
+  if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.id=prefix+'-ec-calc';calcEl.parentElement.appendChild(hidden);}
+  hidden.value=cost.toFixed(4);
+}
+
+function getCalcElecCost(prefix){
+  const el=document.getElementById(prefix+'-ec-calc');
+  return el?parseFloat(el.value)||0:0;
+}
+
 function toggleCard(id){expandedId=expandedId===id?null:id;if(!activeTab[id])activeTab[id]='overview';renderList();}
 function setTab(id,tab){activeTab[id]=tab;renderList();}
 function setFilter(f,el){
@@ -1652,7 +1802,7 @@ function openEditVerModal(ideaId,ci,vi){
   const idea=ideas.find(i=>i.id===ideaId);
   const v=(idea.components||[])[ci]?.versions?.[vi];
   if(!v)return;
-  document.getElementById('evm-ver-num').innerHTML=`Editing <strong style="color:var(--clay)">v${esc(v.num)}</strong>`;
+  document.getElementById('evm-ver-num').value=v.num||'';
   document.getElementById('evm-who').value=v.who||'';
   document.getElementById('evm-notes').value=v.notes||'';
   document.getElementById('evm-fg').value=v.fg||'';
@@ -1677,6 +1827,10 @@ function openEditVerModal(ideaId,ci,vi){
     `<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${ideaId}',${ci},${vi},${i})">Remove</button>`
   ).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
+  populateEquipmentDropdowns();
+  // Restore equipment selection if saved
+  if(v.equipmentId)document.getElementById('evm-equipment').value=v.equipmentId||'';
+  calcVerElectricity('evm');
 }
 function closeEditVerModal(){document.getElementById('edit-ver-modal').classList.remove('open');}
 
@@ -1692,11 +1846,13 @@ async function saveEditVersion(){
 
   showToast('Saving...');
   const {images,files}=await uploadPendingVerFiles(ideaId,'evm',existing.images||[],existing.files||[]);
-  versions[vi]={...existing,notes,who:document.getElementById('evm-who').value.trim(),
+  const num=document.getElementById('evm-ver-num').value.trim()||existing.num;
+  versions[vi]={...existing,num,notes,who:document.getElementById('evm-who').value.trim(),
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
     fcp:parseFloat(document.getElementById('evm-fcp').value)||0,
     ph:parseFloat(document.getElementById('evm-ph').value)||0,
-    ec:parseFloat(document.getElementById('evm-ec').value)||0,
+    ec:getCalcElecCost('evm'),
+    equipmentId:document.getElementById('evm-equipment').value,
     oc:parseFloat(document.getElementById('evm-oc').value)||0,
     cn:document.getElementById('evm-cn').value.trim(),
     images,files};
@@ -1721,7 +1877,7 @@ async function deleteVersion(){
 
 function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');}
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();}
+  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();closeSettings();}
 });
 let toastTimer;
 function showToast(msg){
