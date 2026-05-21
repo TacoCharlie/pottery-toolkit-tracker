@@ -339,33 +339,30 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. 1 failed print, used PLA+"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
-    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photo or render</div>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photos & renders</div>
     <div class="fr">
+      <div id="vm-imgs-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem"></div>
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('vm-img-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="event.preventDefault();this.classList.remove('drag-over');handleVerImgDrop('vm',event)">
-        <input type="file" id="vm-img-input" accept="image/*" onchange="previewVerImg('vm',this)"/>
+        <input type="file" id="vm-img-input" accept="image/*" onchange="addVerImg('vm',this)"/>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <p>Drag & drop or click to add a photo or render</p>
-      </div>
-      <div id="vm-img-preview-wrap" style="display:none;margin-top:.5rem">
-        <img id="vm-img-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--rmd);display:block"/>
-        <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="clearVerImg('vm')">Remove</button>
+        <p>Drag & drop or click to add photos — multiple allowed</p>
       </div>
     </div>
-    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Design file (STL, CAD, PDF, etc.)</div>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Design files (STL, CAD, PDF, etc.)</div>
     <div class="fr">
+      <div id="vm-files-list" style="margin-bottom:.5rem"></div>
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('vm-file-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="event.preventDefault();this.classList.remove('drag-over');handleVerFileDrop('vm',event)">
-        <input type="file" id="vm-file-input" accept=".stl,.obj,.step,.stp,.f3d,.3mf,.pdf,.zip,.dxf" onchange="previewVerFile('vm',this)"/>
+        <input type="file" id="vm-file-input" accept=".stl,.obj,.step,.stp,.f3d,.3mf,.pdf,.zip,.dxf" onchange="addVerFile('vm',this)"/>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--fog)" stroke-width="1.5" style="margin:0 auto"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <p>Drag & drop or click to add a design file</p>
+        <p>Drag & drop or click — multiple files allowed</p>
         <p style="font-size:.75rem;color:var(--fog)">STL, OBJ, STEP, F3D, 3MF, PDF, ZIP</p>
       </div>
-      <div id="vm-file-preview" style="display:none;margin-top:.5rem"></div>
     </div>
     <div class="fac">
       <button class="btn btn-ghost" onclick="closeVerModal()">Cancel</button>
@@ -459,32 +456,27 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="evm-cn"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
-    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photo or render</div>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photos & renders</div>
     <div class="fr">
-      <div id="evm-img-current" style="margin-bottom:.5rem"></div>
+      <div id="evm-imgs-list" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem"></div>
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('evm-img-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="event.preventDefault();this.classList.remove('drag-over');handleVerImgDrop('evm',event)">
-        <input type="file" id="evm-img-input" accept="image/*" onchange="previewVerImg('evm',this)"/>
-        <p style="font-size:.8125rem;color:var(--smoke)">Upload new photo to replace existing</p>
-      </div>
-      <div id="evm-img-preview-wrap" style="display:none;margin-top:.5rem">
-        <img id="evm-img-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--rmd);display:block"/>
-        <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="clearVerImg('evm')">Remove new</button>
+        <input type="file" id="evm-img-input" accept="image/*" onchange="addVerImg('evm',this)"/>
+        <p style="font-size:.8125rem;color:var(--smoke)">Add more photos</p>
       </div>
     </div>
-    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Design file</div>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Design files</div>
     <div class="fr">
-      <div id="evm-file-current" style="margin-bottom:.5rem"></div>
+      <div id="evm-files-list" style="margin-bottom:.5rem"></div>
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('evm-file-input').click()"
         ondragover="event.preventDefault();this.classList.add('drag-over')"
         ondragleave="this.classList.remove('drag-over')"
         ondrop="event.preventDefault();this.classList.remove('drag-over');handleVerFileDrop('evm',event)">
-        <input type="file" id="evm-file-input" accept=".stl,.obj,.step,.stp,.f3d,.3mf,.pdf,.zip,.dxf" onchange="previewVerFile('evm',this)"/>
-        <p style="font-size:.8125rem;color:var(--smoke)">Upload new file to replace existing</p>
+        <input type="file" id="evm-file-input" accept=".stl,.obj,.step,.stp,.f3d,.3mf,.pdf,.zip,.dxf" onchange="addVerFile('evm',this)"/>
+        <p style="font-size:.8125rem;color:var(--smoke)">Add more design files</p>
       </div>
-      <div id="evm-file-preview" style="display:none;margin-top:.5rem"></div>
     </div>
     <div class="fac">
       <button class="btn btn-danger" onclick="deleteVersion()">Delete version</button>
@@ -706,10 +698,10 @@ function ideaHTML(idea){
                 ${vc>0?`<span class="vcost">${fmt$(vc)}</span>`:''}
                 <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="event.stopPropagation();openEditVerModal('${idea.id}',${ci},${vi})">Edit</button>
               </div>
-              <div class="vnotes">${esc(v.notes)}</div>
+              ${v.notes?`<div class="vnotes">${esc(v.notes)}</div>`:''}
               ${v.cn?`<div style="font-size:.75rem;color:var(--fog);margin-top:.2rem;font-style:italic">${esc(v.cn)}</div>`:''}
-              ${v.imgUrl?`<img src="${esc(v.imgUrl)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--rsm);margin-top:.5rem;cursor:pointer;display:block" onclick="event.stopPropagation();openImgViewer('${esc(v.imgUrl)}')" onerror="this.style.display='none'"/>`:''}
-              ${v.fileUrl?renderFileRef({label:v.fileName||'Design file',url:v.fileUrl}):''}
+              ${(v.images||[]).length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.4rem;margin-top:.5rem">${(v.images||[]).map(img=>`<img src="${esc(img)}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);cursor:pointer;display:block" onclick="event.stopPropagation();openImgViewer('${esc(img)}')" onerror="this.style.display='none'"/>`).join('')}</div>`:''}
+              ${(v.files||[]).length?`<div style="margin-top:.5rem">${(v.files||[]).map(f=>renderFileRef({label:f.name||'Design file',url:f.url})).join('')}</div>`:''}
             </div>`;}).join('')}</div>`:'<div class="fv empty" style="margin-bottom:1rem">No versions logged yet.</div>'}
             <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openVerModal('${idea.id}',${ci})">+ Log new version</button>
           </div>
@@ -1085,10 +1077,7 @@ function openVerModal(ideaId,ci){
   document.getElementById('ver-modal-title').textContent='Log version - '+(comp?.name||'Component');
   document.getElementById('vm-next-num').innerHTML=`Next version: <strong style="color:var(--clay)">v${nextNum}</strong>`;
   ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-ec','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
-  clearVerImg('vm');
-  const fp=document.getElementById('vm-file-preview');if(fp){fp.style.display='none';fp.innerHTML='';}
-  const fi=document.getElementById('vm-file-input');if(fi)fi.value='';
-  delete pendingVerFiles['vm-img'];delete pendingVerFiles['vm-file'];
+  clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
@@ -1109,20 +1098,7 @@ async function saveVersion(){
   const versions=[...(comp.versions||[])],num=versions.length?bumpV(versions[0].num):'1.0';
 
   showToast('Saving...');
-
-  // Upload image if selected
-  let imgUrl='';
-  const imgFile=pendingVerFiles['vm-img'];
-  if(imgFile){imgUrl=await uploadImage(ideaId,imgFile)||'';}
-
-  // Upload design file if selected
-  let fileUrl='',fileName='';
-  const designFile=pendingVerFiles['vm-file'];
-  if(designFile){
-    const result=await uploadFile(ideaId,designFile,'files');
-    if(result){fileUrl=result.url;fileName=result.name;}
-  }
-
+  const {images,files}=await uploadPendingVerFiles(ideaId,'vm',[],[]);
   versions.unshift({num,notes,who:document.getElementById('vm-who').value.trim(),date:new Date().toISOString(),
     fg:parseFloat(document.getElementById('vm-fg').value)||0,
     fcp:parseFloat(document.getElementById('vm-fcp').value)||0,
@@ -1130,10 +1106,10 @@ async function saveVersion(){
     ec:parseFloat(document.getElementById('vm-ec').value)||0,
     oc:parseFloat(document.getElementById('vm-oc').value)||0,
     cn:document.getElementById('vm-cn').value.trim(),
-    imgUrl,fileUrl,fileName});
+    images,files});
   comp.versions=versions;components[ci]=comp;
   if(await patchIdea(ideaId,{components})){
-    delete pendingVerFiles['vm-img'];delete pendingVerFiles['vm-file'];
+    clearVerPending('vm');
     closeVerModal();renderList();showToast('Version logged');
   }
 }
@@ -1253,51 +1229,121 @@ async function deleteFeedback(ideaId,iterIdx,fbIdx){
 
 // Version & iteration upload helpers
 const pendingVerFiles={};
+// pendingVerFiles[prefix+'-imgs'] = [{file, previewUrl}, ...]
+// pendingVerFiles[prefix+'-files'] = [{file}, ...]
 
-function previewVerImg(prefix,input){
+function renderPendingImgs(prefix){
+  const list=document.getElementById(prefix+'-imgs-list');if(!list)return;
+  const imgs=pendingVerFiles[prefix+'-imgs']||[];
+  list.innerHTML=imgs.map((img,i)=>`
+    <div style="position:relative;width:100px;height:100px">
+      <img src="${img.previewUrl}" style="width:100px;height:100px;object-fit:cover;border-radius:var(--rsm);display:block"/>
+      <button onclick="removePendingImg('${prefix}',${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">x</button>
+    </div>`).join('');
+}
+
+function renderPendingFiles(prefix){
+  const list=document.getElementById(prefix+'-files-list');if(!list)return;
+  const files=pendingVerFiles[prefix+'-files']||[];
+  const icons={stl:'🖨',obj:'🖨',step:'🖨',stp:'🖨',f3d:'🖨','3mf':'🖨',pdf:'📄',zip:'📦',dxf:'📐'};
+  list.innerHTML=files.map((f,i)=>{
+    const ext=(f.file.name.split('.').pop()||'').toLowerCase();
+    return`<div class="frc" style="margin-bottom:.35rem">
+      <div class="frc-icon">${icons[ext]||'📎'}</div>
+      <div class="frc-info"><div class="frc-label">${esc(f.file.name)}</div><div class="frc-meta">${ext.toUpperCase()} · ${(f.file.size/1024/1024).toFixed(1)}MB · pending</div></div>
+      <button onclick="removePendingFile('${prefix}',${i})" style="background:none;border:none;color:var(--fog);cursor:pointer;font-size:1rem;padding:0 .25rem">x</button>
+    </div>`;
+  }).join('');
+}
+
+function addVerImg(prefix,input){
   const file=input.files[0];if(!file)return;
-  pendingVerFiles[prefix+'-img']=file;
+  if(!pendingVerFiles[prefix+'-imgs'])pendingVerFiles[prefix+'-imgs']=[];
   const reader=new FileReader();
   reader.onload=e=>{
-    const p=document.getElementById(prefix+'-img-preview'),w=document.getElementById(prefix+'-img-preview-wrap');
-    if(p){p.src=e.target.result;w.style.display='block';}
+    pendingVerFiles[prefix+'-imgs'].push({file,previewUrl:e.target.result});
+    renderPendingImgs(prefix);
+    input.value='';
   };
   reader.readAsDataURL(file);
 }
-function clearVerImg(prefix){
-  delete pendingVerFiles[prefix+'-img'];
-  const w=document.getElementById(prefix+'-img-preview-wrap'),i=document.getElementById(prefix+'-img-input');
-  if(w)w.style.display='none';if(i)i.value='';
+
+function removePendingImg(prefix,idx){
+  if(pendingVerFiles[prefix+'-imgs'])pendingVerFiles[prefix+'-imgs'].splice(idx,1);
+  renderPendingImgs(prefix);
 }
+
+function addVerFile(prefix,input){
+  const file=input.files[0];if(!file)return;
+  if(!pendingVerFiles[prefix+'-files'])pendingVerFiles[prefix+'-files']=[];
+  pendingVerFiles[prefix+'-files'].push({file});
+  renderPendingFiles(prefix);
+  input.value='';
+}
+
+function removePendingFile(prefix,idx){
+  if(pendingVerFiles[prefix+'-files'])pendingVerFiles[prefix+'-files'].splice(idx,1);
+  renderPendingFiles(prefix);
+}
+
 function handleVerImgDrop(prefix,event){
   const file=event.dataTransfer.files[0];if(!file)return;
-  pendingVerFiles[prefix+'-img']=file;
+  if(!pendingVerFiles[prefix+'-imgs'])pendingVerFiles[prefix+'-imgs']=[];
   const reader=new FileReader();
   reader.onload=e=>{
-    const p=document.getElementById(prefix+'-img-preview'),w=document.getElementById(prefix+'-img-preview-wrap');
-    if(p){p.src=e.target.result;w.style.display='block';}
+    pendingVerFiles[prefix+'-imgs'].push({file,previewUrl:e.target.result});
+    renderPendingImgs(prefix);
   };
   reader.readAsDataURL(file);
 }
 
-function previewVerFile(prefix,input){
-  const file=input.files[0];if(!file)return;
-  pendingVerFiles[prefix+'-file']=file;
-  const ext=file.name.split('.').pop().toUpperCase();
-  const icons={STL:'🖨',OBJ:'🖨',STEP:'🖨',STP:'🖨',F3D:'🖨','3MF':'🖨',PDF:'📄',ZIP:'📦',DXF:'📐'};
-  const icon=icons[ext]||'📎';
-  const preview=document.getElementById(prefix+'-file-preview');
-  if(preview){
-    preview.style.display='block';
-    preview.innerHTML=`<div class="frc"><div class="frc-icon">${icon}</div><div class="frc-info"><div class="frc-label">${esc(file.name)}</div><div class="frc-meta">${ext} · ${(file.size/1024/1024).toFixed(1)}MB · will upload on save</div></div></div>`;
-  }
-}
 function handleVerFileDrop(prefix,event){
   const file=event.dataTransfer.files[0];if(!file)return;
-  const fakeInput={files:[file]};previewVerFile(prefix,fakeInput);
-  pendingVerFiles[prefix+'-file']=file;
+  if(!pendingVerFiles[prefix+'-files'])pendingVerFiles[prefix+'-files']=[];
+  pendingVerFiles[prefix+'-files'].push({file});
+  renderPendingFiles(prefix);
 }
 
+function clearVerPending(prefix){
+  delete pendingVerFiles[prefix+'-imgs'];
+  delete pendingVerFiles[prefix+'-files'];
+  renderPendingImgs(prefix);
+  renderPendingFiles(prefix);
+  const ii=document.getElementById(prefix+'-img-input');if(ii)ii.value='';
+  const fi=document.getElementById(prefix+'-file-input');if(fi)fi.value='';
+}
+
+async function uploadPendingVerFiles(ideaId,prefix,existingImages,existingFiles){
+  const newImgs=pendingVerFiles[prefix+'-imgs']||[];
+  const newFiles=pendingVerFiles[prefix+'-files']||[];
+  const images=[...(existingImages||[])];
+  const files=[...(existingFiles||[])];
+  for(const img of newImgs){
+    const url=await uploadImage(ideaId,img.file);
+    if(url)images.push(url);
+  }
+  for(const f of newFiles){
+    const result=await uploadFile(ideaId,f.file,'files');
+    if(result)files.push({url:result.url,name:result.name});
+  }
+  return{images,files};
+}
+
+function previewIterImg(input){
+  const file=input.files[0];if(!file)return;
+  pendingVerFiles['im-img']=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById('im-img-preview'),w=document.getElementById('im-img-preview-wrap');
+    if(p){p.src=e.target.result;w.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+function clearIterImg(){
+  delete pendingVerFiles['im-img'];
+  const w=document.getElementById('im-img-preview-wrap'),i=document.getElementById('im-img-input');
+  if(w)w.style.display='none';if(i)i.value='';
+}
 function previewIterImg(input){
   const file=input.files[0];if(!file)return;
   pendingVerFiles['im-img']=file;
@@ -1333,6 +1379,31 @@ function openImgViewer(url){
   </div>`;
   lb.addEventListener('click',e=>{if(e.target===lb)document.body.removeChild(lb);});
   document.body.appendChild(lb);
+}
+
+async function removeExistingVerImg(ideaId,ci,vi,imgIdx){
+  const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
+  const comp={...components[ci]},versions=[...(comp.versions||[])];
+  const v={...versions[vi]};
+  v.images=(v.images||[]).filter((_,i)=>i!==imgIdx);
+  versions[vi]=v;comp.versions=versions;components[ci]=comp;
+  if(await patchIdea(ideaId,{components})){
+    // Re-render the images list in the modal
+    openEditVerModal(ideaId,ci,vi);
+    showToast('Image removed');
+  }
+}
+
+async function removeExistingVerFile(ideaId,ci,vi,fileIdx){
+  const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
+  const comp={...components[ci]},versions=[...(comp.versions||[])];
+  const v={...versions[vi]};
+  v.files=(v.files||[]).filter((_,i)=>i!==fileIdx);
+  versions[vi]=v;comp.versions=versions;components[ci]=comp;
+  if(await patchIdea(ideaId,{components})){
+    openEditVerModal(ideaId,ci,vi);
+    showToast('File removed');
+  }
 }
 
 function previewImage(id,input){
@@ -1533,17 +1604,21 @@ function openEditVerModal(ideaId,ci,vi){
   document.getElementById('evm-ec').value=v.ec||'';
   document.getElementById('evm-oc').value=v.oc||'';
   document.getElementById('evm-cn').value=v.cn||'';
-  // Show existing image
-  const imgCurrent=document.getElementById('evm-img-current');
-  if(imgCurrent)imgCurrent.innerHTML=v.imgUrl?`<img src="${esc(v.imgUrl)}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--rmd);display:block;margin-bottom:.4rem" onerror="this.style.display='none'"/><p style="font-size:.75rem;color:var(--fog);margin-bottom:.4rem">Current photo — upload new to replace</p>`:'';
-  // Show existing file
-  const fileCurrent=document.getElementById('evm-file-current');
-  if(fileCurrent)fileCurrent.innerHTML=v.fileUrl?renderFileRef({label:v.fileName||'Current design file',url:v.fileUrl})+'<p style="font-size:.75rem;color:var(--fog);margin:.4rem 0">Upload new file to replace</p>':'';
-  // Clear pending uploads
-  clearVerImg('evm');
-  const fp=document.getElementById('evm-file-preview');if(fp){fp.style.display='none';fp.innerHTML='';}
-  const fi=document.getElementById('evm-file-input');if(fi)fi.value='';
-  delete pendingVerFiles['evm-img'];delete pendingVerFiles['evm-file'];
+  // Show existing images as grid
+  clearVerPending('evm');
+  const imgsList=document.getElementById('evm-imgs-list');
+  if(imgsList)(v.images||[]).forEach((url,i)=>{
+    const div=document.createElement('div');div.style.cssText='position:relative;width:100px;height:100px';
+    div.innerHTML=`<img src="${esc(url)}" style="width:100px;height:100px;object-fit:cover;border-radius:var(--rsm);display:block" onerror="this.style.display='none'"/>
+      <button onclick="removeExistingVerImg('${ideaId}',${ci},${vi},${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">x</button>`;
+    imgsList.appendChild(div);
+  });
+  // Show existing files
+  const filesList=document.getElementById('evm-files-list');
+  if(filesList)filesList.innerHTML=(v.files||[]).map((f,i)=>
+    renderFileRef({label:f.name||'Design file',url:f.url})+
+    `<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${ideaId}',${ci},${vi},${i})">Remove</button>`
+  ).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
 }
 function closeEditVerModal(){document.getElementById('edit-ver-modal').classList.remove('open');}
@@ -1559,18 +1634,7 @@ async function saveEditVersion(){
   const existing=versions[vi];
 
   showToast('Saving...');
-
-  let imgUrl=existing.imgUrl||'';
-  const imgFile=pendingVerFiles['evm-img'];
-  if(imgFile){imgUrl=await uploadImage(ideaId,imgFile)||imgUrl;}
-
-  let fileUrl=existing.fileUrl||'',fileName=existing.fileName||'';
-  const designFile=pendingVerFiles['evm-file'];
-  if(designFile){
-    const result=await uploadFile(ideaId,designFile,'files');
-    if(result){fileUrl=result.url;fileName=result.name;}
-  }
-
+  const {images,files}=await uploadPendingVerFiles(ideaId,'evm',existing.images||[],existing.files||[]);
   versions[vi]={...existing,notes,who:document.getElementById('evm-who').value.trim(),
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
     fcp:parseFloat(document.getElementById('evm-fcp').value)||0,
@@ -1578,10 +1642,10 @@ async function saveEditVersion(){
     ec:parseFloat(document.getElementById('evm-ec').value)||0,
     oc:parseFloat(document.getElementById('evm-oc').value)||0,
     cn:document.getElementById('evm-cn').value.trim(),
-    imgUrl,fileUrl,fileName};
+    images,files};
   comp.versions=versions;components[ci]=comp;
   if(await patchIdea(ideaId,{components})){
-    delete pendingVerFiles['evm-img'];delete pendingVerFiles['evm-file'];
+    clearVerPending('evm');
     closeEditVerModal();renderList();showToast('Version updated');
   }
 }
