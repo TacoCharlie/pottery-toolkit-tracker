@@ -1359,12 +1359,12 @@ function renderPendingImgs(prefix){
 function renderPendingFiles(prefix){
   const list=document.getElementById(prefix+'-files-list');if(!list)return;
   const files=pendingVerFiles[prefix+'-files']||[];
-  const icons={stl:'🧊',obj:'🧊',step:'📐',stp:'📐',f3d:'🧊','3mf':'🧊',pdf:'📄',zip:'📦',dxf:'📐'};
+  const icons={stl:'STL',obj:'STL',step:'STP',stp:'STP',f3d:'STL','3mf':'STL',pdf:'PDF',zip:'ZIP',dxf:'STP'};
   list.innerHTML=files.map((f,i)=>{
     const ext=(f.file.name.split('.').pop()||'').toLowerCase();
     return`<div class="frc" style="margin-bottom:.35rem">
-      <div class="frc-icon">${icons[ext]||'📎'}</div>
-      <div class="frc-info"><div class="frc-label">${esc(f.file.name)}</div><div class="frc-meta">${ext.toUpperCase()} · ${(f.file.size/1024/1024).toFixed(1)}MB · pending</div></div>
+      <div class="frc-icon">${icons[ext]||'FILE'}</div>
+      <div class="frc-info"><div class="frc-label">${esc(f.file.name)}</div><div class="frc-meta">${ext.toUpperCase()}  -  ${(f.file.size/1024/1024).toFixed(1)}MB  -  pending</div></div>
       <button onclick="removePendingFile('${prefix}',${i})" style="background:none;border:none;color:var(--fog);cursor:pointer;font-size:1rem;padding:0 .25rem">x</button>
     </div>`;
   }).join('');
@@ -1489,7 +1489,7 @@ function openImgViewer(url){
   lb.innerHTML=`<div class="pic-lb-in" onclick="event.stopPropagation()" style="max-width:800px">
     <button class="pic-lb-close" onclick="document.body.removeChild(this.closest('.pic-lb'))">x</button>
     <img src="${esc(url)}" style="width:100%;border-radius:var(--rmd);display:block"/>
-    <div style="margin-top:.75rem"><a href="${esc(url)}" target="_blank" class="btn btn-ghost btn-sm">↗ Open full size</a></div>
+    <div style="margin-top:.75rem"><a href="${esc(url)}" target="_blank" class="btn btn-ghost btn-sm">>> Open full size</a></div>
   </div>`;
   lb.addEventListener('click',e=>{if(e.target===lb)document.body.removeChild(lb);});
   document.body.appendChild(lb);
@@ -1629,8 +1629,8 @@ function renderFileRef(r, compact=false){
   const ext=(url.split('?')[0].split('.').pop()||'').toLowerCase();
   const isImage=['jpg','jpeg','png','gif','webp','svg'].includes(ext);
   const isMega=url.includes('mega.nz')||url.includes('mega.co.nz');
-  const icons={stl:'🧊',obj:'🧊',step:'📐',stp:'📐',f3d:'🧊','3mf':'🧊',pdf:'📄',zip:'📦',rar:'📦',mp4:'🎬',mov:'🎬'};
-  const icon=icons[ext]||'📎';
+  const icons={stl:'STL',obj:'STL',step:'STP',stp:'STP',f3d:'STL','3mf':'STL',pdf:'PDF',zip:'ZIP',rar:'ZIP',mp4:'VID',mov:'VID'};
+  const icon=icons[ext]||'FILE';
   const displayLabel=label||(isMega?'MEGA file':url.split('/').pop().split('?')[0]||'File');
   const typeLabel=isMega?'MEGA link':(ext?ext.toUpperCase()+' file':'File');
 
@@ -1639,13 +1639,13 @@ function renderFileRef(r, compact=false){
       <img src="${esc(url)}" class="frc-img" onerror="this.parentElement.querySelector('.frc-icon-fb').style.display='flex';this.style.display='none'" onclick="event.stopPropagation();window.open('${esc(url)}','_blank')"/>
       <div class="frc-icon frc-icon-fb" style="display:none">${icon}</div>
       <div class="frc-info"><div class="frc-label">${esc(displayLabel)}</div><div class="frc-meta">${typeLabel}</div></div>
-      <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open</a>
+      <a href="${esc(url)}" target="_blank" class="frc-open">>> Open</a>
     </div>`;
   }
   return`<div class="frc">
     <div class="frc-icon">${icon}</div>
     <div class="frc-info"><div class="frc-label">${esc(displayLabel)}</div><div class="frc-meta">${typeLabel}</div></div>
-    <a href="${esc(url)}" target="_blank" class="frc-open">↗ Open</a>
+    <a href="${esc(url)}" target="_blank" class="frc-open">>> Open</a>
   </div>`;
 }
 
@@ -1671,10 +1671,12 @@ async function deleteIdea(id){
 let appSettings={cost_per_kwh:0,equipment:[]};
 
 async function loadSettings(){
-  const {data,error}=await db.from('settings').select('*').eq('id','global').single();
-  if(!error&&data){
-    appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[]};
-  }
+  try{
+    const {data,error}=await db.from('settings').select('*').eq('id','global').single();
+    if(!error&&data){
+      appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[]};
+    }
+  }catch(e){console.log('Settings not loaded:',e);}
 }
 
 async function saveSettings(){
@@ -1707,13 +1709,13 @@ function renderEquipmentList(){
   const list=document.getElementById('settings-equipment-list');if(!list)return;
   const eq=appSettings.equipment||[];
   if(!eq.length){list.innerHTML='<div class="fv empty" style="margin-bottom:.5rem">No equipment added yet.</div>';return;}
-  const typeLabel={3dprinter:'3D Printer',kiln:'Kiln',other:'Other'};
+  const typeLabel={'3dprinter':'3D Printer',kiln:'Kiln',other:'Other'};
   list.innerHTML=eq.map((e,i)=>`
     <div class="frc" style="margin-bottom:.4rem">
-      <div class="frc-icon">${e.type==='3dprinter'?'🖨️':e.type==='kiln'?'🔥':'⚙️'}</div>
+      <div class="frc-icon">${e.type==='3dprinter'?'3DP':e.type==='kiln'?'KILN':'EQ'}</div>
       <div class="frc-info">
         <div class="frc-label">${esc(e.name)}</div>
-        <div class="frc-meta">${typeLabel[e.type]||'Other'} · ${e.watts}W${e.notes?' · '+esc(e.notes):''}</div>
+        <div class="frc-meta">${typeLabel[e.type]||'Other'}  -  ${e.watts}W${e.notes?'  -  '+esc(e.notes):''}</div>
       </div>
       <button class="btn btn-danger btn-xs" onclick="removeEquipment(${i})">Remove</button>
     </div>`).join('');
@@ -1748,7 +1750,7 @@ function calcVerElectricity(prefix){
   if(!eq||!hours||!kwh){calcEl.style.display='none';return;}
   const cost=(hours*eq.watts/1000*kwh);
   calcEl.style.display='block';
-  calcEl.innerHTML=`<strong>${hours}h × ${eq.watts}W ÷ 1000 × $${kwh}/kWh = <span style="color:var(--clay)">${fmt$(cost)}</span></strong> electricity cost`;
+  calcEl.innerHTML=`<strong>${hours}h x ${eq.watts}W / 1000 x $${kwh}/kWh = <span style="color:var(--clay)">${fmt$(cost)}</span></strong> electricity cost`;
   // Store calculated value on a hidden field
   let hidden=document.getElementById(prefix+'-ec-calc');
   if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.id=prefix+'-ec-calc';calcEl.parentElement.appendChild(hidden);}
