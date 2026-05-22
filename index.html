@@ -358,7 +358,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
           <option value="">Select equipment...</option>
         </select>
       </div>
-      <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="vm-ph" placeholder="0" step="0.5" oninput="calcVerElectricity('vm')"/></div>
+      <div class="fr"><label>Print time</label>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <input type="number" autocomplete="off" id="vm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
+          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
+          <input type="number" autocomplete="off" id="vm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
+          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+        </div>
+      </div>
     </div>
     <div id="vm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01"/></div>
@@ -480,7 +487,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
           <option value="">Select equipment...</option>
         </select>
       </div>
-      <div class="fr"><label>Print time (hours)</label><input type="number" autocomplete="off" id="evm-ph" step="0.5"/></div>
+      <div class="fr"><label>Print time</label>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <input type="number" autocomplete="off" id="evm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
+          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
+          <input type="number" autocomplete="off" id="evm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
+          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+        </div>
+      </div>
     </div>
     <div id="evm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
@@ -1257,7 +1271,7 @@ function openVerModal(ideaId,ci){
   const nextNum=versions.length?bumpV(versions[0].num):'1';
   document.getElementById('ver-modal-title').textContent='Log version - '+(comp?.name||'Component');
   document.getElementById('vm-next-num').innerHTML=`Next version: <strong style="color:var(--clay)">v${nextNum}</strong>`;
-  ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
+  ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-pm','vm-oc','vm-cn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
   populateEquipmentDropdowns();
@@ -1284,7 +1298,7 @@ async function saveVersion(){
   versions.unshift({num,notes,who:document.getElementById('vm-who').value.trim(),date:new Date().toISOString(),
     fg:parseFloat(document.getElementById('vm-fg').value)||0,
     fcp:parseFloat(document.getElementById('vm-fcp').value)||0,
-    ph:parseFloat(document.getElementById('vm-ph').value)||0,
+    ph:parseFloat(document.getElementById('vm-ph-total')?.value)||(parseFloat(document.getElementById('vm-ph').value)||0),
     ec:getCalcElecCost('vm'),
     equipmentId:document.getElementById('vm-equipment').value,
     oc:parseFloat(document.getElementById('vm-oc').value)||0,
@@ -1810,20 +1824,26 @@ function populateEquipmentDropdowns(){
 function calcVerElectricity(prefix){
   const sel=document.getElementById(prefix+'-equipment');
   const phEl=document.getElementById(prefix+'-ph');
+  const pmEl=document.getElementById(prefix+'-pm');
   const calcEl=document.getElementById(prefix+'-elec-calc');
   if(!sel||!phEl||!calcEl)return;
   const eqId=sel.value;
-  const hours=parseFloat(phEl.value)||0;
+  const hours=(parseFloat(phEl.value)||0)+(parseFloat(pmEl?.value||0)/60);
   const eq=(appSettings.equipment||[]).find(e=>e.id===eqId);
   const kwh=appSettings.cost_per_kwh||0;
   if(!eq||!hours||!kwh){calcEl.style.display='none';return;}
-  const cost=(hours*eq.watts/1000*kwh);
+  const cost=hours*eq.watts/1000*kwh;
+  const hDisplay=Math.floor(hours);
+  const mDisplay=Math.round((hours-hDisplay)*60);
+  const timeStr=hDisplay>0?`${hDisplay}h ${mDisplay}min`:`${mDisplay}min`;
   calcEl.style.display='block';
-  calcEl.innerHTML=`<strong>${hours}h x ${eq.watts}W / 1000 x $${kwh}/kWh = <span style="color:var(--clay)">${fmt$(cost)}</span></strong> electricity cost`;
-  // Store calculated value on a hidden field
+  calcEl.innerHTML=`<strong>${timeStr} x ${eq.watts}W / 1000 x $${kwh}/kWh = <span style="color:var(--clay)">${fmt$(cost)}</span></strong> electricity cost`;
   let hidden=document.getElementById(prefix+'-ec-calc');
   if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.id=prefix+'-ec-calc';calcEl.parentElement.appendChild(hidden);}
   hidden.value=cost.toFixed(4);
+  let hoursHidden=document.getElementById(prefix+'-ph-total');
+  if(!hoursHidden){hoursHidden=document.createElement('input');hoursHidden.type='hidden';hoursHidden.id=prefix+'-ph-total';calcEl.parentElement.appendChild(hoursHidden);}
+  hoursHidden.value=hours.toFixed(4);
 }
 
 function getCalcElecCost(prefix){
@@ -1878,7 +1898,10 @@ function openEditVerModal(ideaId,ci,vi){
   document.getElementById('evm-notes').value=v.notes||'';
   document.getElementById('evm-fg').value=v.fg||'';
   document.getElementById('evm-fcp').value=v.fcp||'';
-  document.getElementById('evm-ph').value=v.ph||'';
+  // Restore hours/minutes from stored decimal hours
+  const totalHours=parseFloat(v.ph)||0;
+  document.getElementById('evm-ph').value=Math.floor(totalHours)||'';
+  document.getElementById('evm-pm').value=Math.round((totalHours%1)*60)||'';
   document.getElementById('evm-oc').value=v.oc||'';
   document.getElementById('evm-cn').value=v.cn||'';
   // Show existing images as grid
@@ -1920,7 +1943,7 @@ async function saveEditVersion(){
   versions[vi]={...existing,num,notes,who:document.getElementById('evm-who').value.trim(),
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
     fcp:parseFloat(document.getElementById('evm-fcp').value)||0,
-    ph:parseFloat(document.getElementById('evm-ph').value)||0,
+    ph:parseFloat(document.getElementById('evm-ph-total')?.value)||(parseFloat(document.getElementById('evm-ph').value)||0),
     ec:getCalcElecCost('evm'),
     equipmentId:document.getElementById('evm-equipment').value,
     oc:parseFloat(document.getElementById('evm-oc').value)||0,
