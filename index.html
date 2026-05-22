@@ -510,8 +510,19 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     </div>
     <div class="fac">
       <button class="btn btn-danger" onclick="deleteVersion()">Delete version</button>
+      <button class="btn btn-ghost" onclick="toggleMoveVersion()">Move to component</button>
       <button class="btn btn-ghost" onclick="closeEditVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditVersion()">Save changes</button>
+    </div>
+    <div id="move-ver-panel" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--b)">
+      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.5rem">Move to component</div>
+      <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Select the component to move this version to. It will be added as the latest version and renumbered.</div>
+      <div class="fr"><label>Destination component</label>
+        <select id="move-ver-target"></select>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
+        <button class="btn btn-primary btn-sm" onclick="moveVersion()">Move version</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1831,6 +1842,7 @@ function openEditVerModal(ideaId,ci,vi){
     `<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${ideaId}',${ci},${vi},${i})">Remove</button>`
   ).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
+  const mvp=document.getElementById('move-ver-panel');if(mvp)mvp.style.display='none';
   populateEquipmentDropdowns();
   // Restore equipment selection if saved
   if(v.equipmentId)document.getElementById('evm-equipment').value=v.equipmentId||'';
@@ -1867,6 +1879,54 @@ async function saveEditVersion(){
   }
 }
 
+function toggleMoveVersion(){
+  const panel=document.getElementById('move-ver-panel');
+  const isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    // Populate destination dropdown with other components
+    const ideaId=document.getElementById('evm-idea-id').value;
+    const ci=parseInt(document.getElementById('evm-comp-idx').value);
+    const idea=ideas.find(i=>i.id===ideaId);
+    const sel=document.getElementById('move-ver-target');
+    sel.innerHTML=(idea.components||[])
+      .map((c,i)=>i===ci?null:`<option value="${i}">${esc(c.name)}</option>`)
+      .filter(Boolean).join('');
+    if(!sel.innerHTML)sel.innerHTML='<option disabled>No other components exist — create one first</option>';
+  }
+}
+
+async function moveVersion(){
+  const ideaId=document.getElementById('evm-idea-id').value;
+  const ci=parseInt(document.getElementById('evm-comp-idx').value);
+  const vi=parseInt(document.getElementById('evm-ver-idx').value);
+  const targetCi=parseInt(document.getElementById('move-ver-target').value);
+  if(isNaN(targetCi)){showToast('Please select a destination component');return;}
+
+  const idea=ideas.find(i=>i.id===ideaId);
+  const components=idea.components.map(c=>({...c,versions:[...(c.versions||[])]}));
+
+  // Get the version being moved
+  const movingVer={...components[ci].versions[vi]};
+
+  // Remove from source and renumber
+  components[ci].versions=components[ci].versions.filter((_,i)=>i!==vi);
+  const srcSorted=[...components[ci].versions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  srcSorted.forEach((v,i)=>v.num=String(i+1));
+  components[ci].versions=[...srcSorted].reverse();
+
+  // Add to destination as newest and renumber
+  components[targetCi].versions.unshift(movingVer);
+  const dstSorted=[...components[targetCi].versions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  dstSorted.forEach((v,i)=>v.num=String(i+1));
+  components[targetCi].versions=[...dstSorted].reverse();
+
+  if(await patchIdea(ideaId,{components})){
+    closeEditVerModal();renderList();
+    showToast(`Version moved to ${esc(components[targetCi].name)}`);
+  }
+}
+
 async function deleteVersion(){
   if(!confirm('Delete this version? This cannot be undone.'))return;
   const ideaId=document.getElementById('evm-idea-id').value;
@@ -1874,9 +1934,14 @@ async function deleteVersion(){
   const vi=parseInt(document.getElementById('evm-ver-idx').value);
   const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])];
   const comp={...components[ci]};
-  comp.versions=(comp.versions||[]).filter((_,i)=>i!==vi);
+  // Remove the version
+  const versions=(comp.versions||[]).filter((_,i)=>i!==vi);
+  // Renumber: versions are stored newest-first, so sort by date, renumber oldest to newest, reverse back
+  const sorted=[...versions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  sorted.forEach((v,i)=>v.num=String(i+1));
+  comp.versions=[...sorted].reverse();
   components[ci]=comp;
-  if(await patchIdea(ideaId,{components})){closeEditVerModal();renderList();showToast('Version deleted');}
+  if(await patchIdea(ideaId,{components})){closeEditVerModal();renderList();showToast('Version deleted and renumbered');}
 }
 
 function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');}
