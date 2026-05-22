@@ -2257,6 +2257,7 @@ function openEditVerModal(ideaId,ci,vi){
     renderFileRef({label:f.name||'Design file',url:f.url})+
     `<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${ideaId}',${ci},${vi},${i})">Remove</button>`
   ).join('');
+  document.getElementById('edit-ver-modal').querySelector('h2').textContent=`Edit ${comp?.name||'component'} — v${v.num}`;
   document.getElementById('edit-ver-modal').classList.add('open');
   populateEquipmentDropdowns();
   populateFilamentDropdowns();
