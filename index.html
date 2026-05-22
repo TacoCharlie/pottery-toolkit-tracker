@@ -519,7 +519,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
 
 <!-- EDIT ITERATION MODAL -->
 <div class="modal-backdrop" id="edit-iter-modal" onclick="if(event.target===this)closeEditIterModal()">
-  <div class="modal">
+  <div class="modal mlg">
     <h2>Edit iteration</h2>
     <input type="hidden" id="eim-idea-id"/>
     <input type="hidden" id="eim-iter-idx"/>
@@ -532,6 +532,15 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       </select>
     </div>
     <div class="fr"><label>Notes</label><textarea autocomplete="off" id="eim-notes" style="min-height:100px"></textarea></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.5rem">Components</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Select which version of each component is in this iteration.</div>
+    <div id="eim-comp-rows"></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Additional costs</div>
+    <div class="fr"><label>Amount ($)</label><input type="number" autocomplete="off" id="eim-add-cost" placeholder="0.00" step="0.01"/></div>
+    <div class="fr"><label>Notes on additional costs</label><input type="text" autocomplete="off" id="eim-add-notes"/></div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Prototype photo</div>
     <div class="fr">
       <div id="eim-img-current" style="margin-bottom:.5rem"></div>
@@ -1932,6 +1941,31 @@ function openEditIterModal(ideaId,iterIdx){
   document.getElementById('eim-name').value=iter.name||'';
   document.getElementById('eim-status').value=iter.status||'Testing';
   document.getElementById('eim-notes').value=iter.notes||'';
+  document.getElementById('eim-add-cost').value=iter.addCost||'';
+  document.getElementById('eim-add-notes').value=iter.addNotes||'';
+
+  // Populate component version rows
+  const components=idea.components||[];
+  const rows=document.getElementById('eim-comp-rows');
+  if(!components.length){
+    rows.innerHTML='<div class="fv empty" style="margin-bottom:.75rem">No components.</div>';
+  } else {
+    rows.innerHTML=components.map((c,ci)=>{
+      const existing=(iter.compVersions||[]).find(cv=>cv.compName===c.name);
+      const currentVal=existing?.unchanged?'unchanged':(existing?.version||'unchanged');
+      const versions=c.versions||[];
+      const vOpts=versions.map(v=>`<option value="${esc(v.num)}" ${currentVal===v.num?'selected':''}>v${esc(v.num)} — ${esc(v.notes.substring(0,35))}</option>`).join('');
+      return`<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;background:var(--sand);border-radius:var(--rsm);margin-bottom:.35rem">
+        <div style="flex:1;font-size:.875rem;font-weight:500">${esc(c.name)}</div>
+        <select id="eim-comp-ver-${ci}" style="font-family:var(--fb);font-size:.8125rem;padding:.35rem .5rem;border:1px solid var(--bm);border-radius:var(--rsm);background:var(--w)">
+          <option value="unchanged" ${currentVal==='unchanged'?'selected':''}>Unchanged / not printed</option>
+          ${vOpts}
+        </select>
+      </div>`;
+    }).join('');
+  }
+
+  // Show existing photo
   const cur=document.getElementById('eim-img-current');
   if(cur)cur.innerHTML=iter.img?`<img src="${esc(iter.img)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--rmd);display:block;margin-bottom:.4rem" onerror="this.style.display='none'"/>
     <p style="font-size:.75rem;color:var(--fog);margin-bottom:.4rem">Current photo — upload new to replace</p>`:'';
@@ -1972,16 +2006,26 @@ async function saveEditIteration(){
   const idea=ideas.find(i=>i.id===ideaId);
   const iterations=[...(idea.iterations||[])];
   const iter={...iterations[iterIdx]};
+  const components=idea.components||[];
 
   let img=iter.img||'';
   const imgFile=pendingVerFiles['eim-img'];
   if(imgFile){showToast('Uploading...');img=await uploadImage(ideaId,imgFile)||img;}
 
+  const compVersions=components.map((c,ci)=>{
+    const sel=document.getElementById('eim-comp-ver-'+ci);
+    const val=sel?sel.value:'unchanged';
+    return{compName:c.name,version:val==='unchanged'?null:val,unchanged:val==='unchanged'};
+  });
+
   iterations[iterIdx]={...iter,
     name:document.getElementById('eim-name').value.trim()||iter.name,
     status:document.getElementById('eim-status').value,
     notes:document.getElementById('eim-notes').value.trim(),
-    img};
+    addCost:parseFloat(document.getElementById('eim-add-cost').value)||0,
+    addNotes:document.getElementById('eim-add-notes').value.trim(),
+    compVersions,img};
+
   if(await patchIdea(ideaId,{iterations})){
     delete pendingVerFiles['eim-img'];
     closeEditIterModal();renderList();showToast('Iteration updated');
