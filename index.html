@@ -517,6 +517,44 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
   </div>
 </div>
 
+<!-- EDIT ITERATION MODAL -->
+<div class="modal-backdrop" id="edit-iter-modal" onclick="if(event.target===this)closeEditIterModal()">
+  <div class="modal">
+    <h2>Edit iteration</h2>
+    <input type="hidden" id="eim-idea-id"/>
+    <input type="hidden" id="eim-iter-idx"/>
+    <div class="fr"><label>Name</label><input type="text" autocomplete="off" id="eim-name"/></div>
+    <div class="fr"><label>Status</label>
+      <select id="eim-status">
+        <option value="Testing">Testing</option>
+        <option value="Final">Final</option>
+        <option value="Archived">Archived</option>
+      </select>
+    </div>
+    <div class="fr"><label>Notes</label><textarea autocomplete="off" id="eim-notes" style="min-height:100px"></textarea></div>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Prototype photo</div>
+    <div class="fr">
+      <div id="eim-img-current" style="margin-bottom:.5rem"></div>
+      <div class="upload-area" onclick="event.stopPropagation();document.getElementById('eim-img-input').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="event.preventDefault();this.classList.remove('drag-over');handleEditIterImgDrop(event)">
+        <input type="file" id="eim-img-input" accept="image/*" onchange="previewEditIterImg(this)"/>
+        <p style="font-size:.8125rem;color:var(--smoke)">Upload new photo to replace existing</p>
+      </div>
+      <div id="eim-img-preview-wrap" style="display:none;margin-top:.5rem">
+        <img id="eim-img-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--rmd);display:block"/>
+        <button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="clearEditIterImg()">Remove new</button>
+      </div>
+    </div>
+    <div class="fac">
+      <button class="btn btn-danger" onclick="deleteIteration()">Delete iteration</button>
+      <button class="btn btn-ghost" onclick="closeEditIterModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditIteration()">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- MOVE VERSION MODAL -->
 <div class="modal-backdrop" id="move-ver-modal" onclick="if(event.target===this)closeMoveVerModal()">
   <div class="modal">
@@ -819,7 +857,10 @@ function ideaHTML(idea){
                 ${pendingFb>0?`<span style="color:var(--am)">${pendingFb} open feedback</span>`:''}
               </div>
             </div>
-            <svg class="ichev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            <div style="display:flex;gap:.35rem;align-items:center;flex-shrink:0">
+              <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openEditIterModal('${idea.id}',${realIdx})">Edit</button>
+              <svg class="ichev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
           <div class="iter-body">
             ${iter.notes?`<div style="font-size:.875rem;color:var(--kiln);margin-bottom:1rem;line-height:1.6">${esc(iter.notes)}</div>`:''}
@@ -1883,6 +1924,81 @@ async function saveEditVersion(){
   }
 }
 
+function openEditIterModal(ideaId,iterIdx){
+  document.getElementById('eim-idea-id').value=ideaId;
+  document.getElementById('eim-iter-idx').value=iterIdx;
+  const idea=ideas.find(i=>i.id===ideaId);
+  const iter=(idea.iterations||[])[iterIdx];if(!iter)return;
+  document.getElementById('eim-name').value=iter.name||'';
+  document.getElementById('eim-status').value=iter.status||'Testing';
+  document.getElementById('eim-notes').value=iter.notes||'';
+  const cur=document.getElementById('eim-img-current');
+  if(cur)cur.innerHTML=iter.img?`<img src="${esc(iter.img)}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--rmd);display:block;margin-bottom:.4rem" onerror="this.style.display='none'"/>
+    <p style="font-size:.75rem;color:var(--fog);margin-bottom:.4rem">Current photo — upload new to replace</p>`:'';
+  clearEditIterImg();
+  document.getElementById('edit-iter-modal').classList.add('open');
+}
+function closeEditIterModal(){document.getElementById('edit-iter-modal').classList.remove('open');}
+
+function previewEditIterImg(input){
+  const file=input.files[0];if(!file)return;
+  pendingVerFiles['eim-img']=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById('eim-img-preview'),w=document.getElementById('eim-img-preview-wrap');
+    if(p){p.src=e.target.result;w.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+function clearEditIterImg(){
+  delete pendingVerFiles['eim-img'];
+  const w=document.getElementById('eim-img-preview-wrap'),i=document.getElementById('eim-img-input');
+  if(w)w.style.display='none';if(i)i.value='';
+}
+function handleEditIterImgDrop(event){
+  const file=event.dataTransfer.files[0];if(!file)return;
+  pendingVerFiles['eim-img']=file;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=document.getElementById('eim-img-preview'),w=document.getElementById('eim-img-preview-wrap');
+    if(p){p.src=e.target.result;w.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveEditIteration(){
+  const ideaId=document.getElementById('eim-idea-id').value;
+  const iterIdx=parseInt(document.getElementById('eim-iter-idx').value);
+  const idea=ideas.find(i=>i.id===ideaId);
+  const iterations=[...(idea.iterations||[])];
+  const iter={...iterations[iterIdx]};
+
+  let img=iter.img||'';
+  const imgFile=pendingVerFiles['eim-img'];
+  if(imgFile){showToast('Uploading...');img=await uploadImage(ideaId,imgFile)||img;}
+
+  iterations[iterIdx]={...iter,
+    name:document.getElementById('eim-name').value.trim()||iter.name,
+    status:document.getElementById('eim-status').value,
+    notes:document.getElementById('eim-notes').value.trim(),
+    img};
+  if(await patchIdea(ideaId,{iterations})){
+    delete pendingVerFiles['eim-img'];
+    closeEditIterModal();renderList();showToast('Iteration updated');
+  }
+}
+
+async function deleteIteration(){
+  if(!confirm('Delete this iteration? This cannot be undone.'))return;
+  const ideaId=document.getElementById('eim-idea-id').value;
+  const iterIdx=parseInt(document.getElementById('eim-iter-idx').value);
+  const idea=ideas.find(i=>i.id===ideaId);
+  const iterations=(idea.iterations||[]).filter((_,i)=>i!==iterIdx);
+  // Renumber remaining iterations
+  iterations.forEach((it,i)=>it.num=i+1);
+  if(await patchIdea(ideaId,{iterations})){closeEditIterModal();renderList();showToast('Iteration deleted');}
+}
+
 function toggleMoveVersion(){
   const ideaId=document.getElementById('evm-idea-id').value;
   const ci=parseInt(document.getElementById('evm-comp-idx').value);
@@ -1946,7 +2062,7 @@ async function deleteVersion(){
 
 function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');}
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();closeSettings();closeMoveVerModal();}
+  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();closeSettings();closeMoveVerModal();closeEditIterModal();}
 });
 let toastTimer;
 function showToast(msg){
