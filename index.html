@@ -466,6 +466,17 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <input type="hidden" id="evm-comp-idx"/>
     <input type="hidden" id="evm-ver-idx"/>
     <div class="fr"><label>Version number</label><input type="text" autocomplete="off" id="evm-ver-num" placeholder="e.g. 1, 2, 3"/></div>
+    <div id="move-ver-panel" style="display:none;background:var(--sand);border-radius:var(--rmd);padding:1rem;margin-bottom:1rem">
+      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.5rem">Move to component</div>
+      <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Version will be added to the destination component and both will be renumbered chronologically.</div>
+      <div class="fr"><label>Destination component</label>
+        <select id="move-ver-target"></select>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem">
+        <button class="btn btn-ghost btn-sm" onclick="toggleMoveVersion()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="moveVersion()">Move version</button>
+      </div>
+    </div>
     <div class="fr"><label>Who worked on this?</label><input type="text" autocomplete="off" id="evm-who"/></div>
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -513,16 +524,6 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       <button class="btn btn-ghost" onclick="toggleMoveVersion()">Move to component</button>
       <button class="btn btn-ghost" onclick="closeEditVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditVersion()">Save changes</button>
-    </div>
-    <div id="move-ver-panel" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--b)">
-      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.5rem">Move to component</div>
-      <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Select the component to move this version to. It will be added as the latest version and renumbered.</div>
-      <div class="fr"><label>Destination component</label>
-        <select id="move-ver-target"></select>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
-        <button class="btn btn-primary btn-sm" onclick="moveVersion()">Move version</button>
-      </div>
     </div>
   </div>
 </div>
