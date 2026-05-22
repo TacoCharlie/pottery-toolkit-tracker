@@ -348,33 +348,49 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="vm-notes" placeholder="Describe what changed in this version..."></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Cost to produce this version</div>
-    <div class="fr"><label>Filament lot used</label>
-      <select id="vm-filament-lot" onchange="calcVerFilament('vm')">
-        <option value="">Select filament lot...</option>
+    <div class="fr"><label>Cost type</label>
+      <select id="vm-cost-type" onchange="toggleVerCostType('vm')">
+        <option value="3dprint">3D Printed (calculate from filament + electricity)</option>
+        <option value="thirdparty">Third-party manufactured (enter cost per unit)</option>
+        <option value="other">Other / manual entry</option>
       </select>
     </div>
-    <div class="f2c">
-      <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="vm-fg" placeholder="0" step="0.1" oninput="calcVerFilament('vm')"/></div>
-      <div class="fr"><label>Filament cost</label><div id="vm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
-    </div>
-    <div class="f2c">
-      <div class="fr"><label>Equipment used</label>
-        <select id="vm-equipment" onchange="calcVerElectricity('vm')">
-          <option value="">Select equipment...</option>
+    <div id="vm-cost-3dprint">
+      <div class="fr"><label>Filament lot used</label>
+        <select id="vm-filament-lot" onchange="calcVerFilament('vm')">
+          <option value="">Select filament lot...</option>
         </select>
       </div>
-      <div class="fr"><label>Print time</label>
-        <div style="display:flex;gap:.5rem;align-items:center">
-          <input type="number" autocomplete="off" id="vm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
-          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
-          <input type="number" autocomplete="off" id="vm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
-          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+      <div class="f2c">
+        <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="vm-fg" placeholder="0" step="0.1" oninput="calcVerFilament('vm')"/></div>
+        <div class="fr"><label>Filament cost</label><div id="vm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
+      </div>
+      <div class="f2c">
+        <div class="fr"><label>Equipment used</label>
+          <select id="vm-equipment" onchange="calcVerElectricity('vm')">
+            <option value="">Select equipment...</option>
+          </select>
+        </div>
+        <div class="fr"><label>Print time</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input type="number" autocomplete="off" id="vm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
+            <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
+            <input type="number" autocomplete="off" id="vm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('vm')" style="width:80px"/>
+            <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+          </div>
         </div>
       </div>
+      <div id="vm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     </div>
-    <div id="vm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
+    <div id="vm-cost-thirdparty" style="display:none">
+      <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="vm-unit-cost" placeholder="0.00" step="0.01"/></div>
+      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="vm-supplier" placeholder="e.g. Bay Rubber Company"/></div>
+    </div>
+    <div id="vm-cost-other" style="display:none">
+      <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="vm-other-cost" placeholder="0.00" step="0.01"/></div>
+    </div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01"/></div>
-    <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. 1 failed print, used PLA+"/></div>
+    <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. sample fee, failed print, shipping"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photos & renders</div>
     <div class="fr">
@@ -482,31 +498,47 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Cost to produce this version</div>
-    <div class="fr"><label>Filament lot used</label>
-      <select id="evm-filament-lot" onchange="calcVerFilament('evm')">
-        <option value="">Select filament lot...</option>
+    <div class="fr"><label>Cost type</label>
+      <select id="evm-cost-type" onchange="toggleVerCostType('evm')">
+        <option value="3dprint">3D Printed (calculate from filament + electricity)</option>
+        <option value="thirdparty">Third-party manufactured (enter cost per unit)</option>
+        <option value="other">Other / manual entry</option>
       </select>
     </div>
-    <div class="f2c">
-      <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
-      <div class="fr"><label>Filament cost</label><div id="evm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
-    </div>
-    <div class="f2c">
-      <div class="fr"><label>Equipment used</label>
-        <select id="evm-equipment" onchange="calcVerElectricity('evm')">
-          <option value="">Select equipment...</option>
+    <div id="evm-cost-3dprint">
+      <div class="fr"><label>Filament lot used</label>
+        <select id="evm-filament-lot" onchange="calcVerFilament('evm')">
+          <option value="">Select filament lot...</option>
         </select>
       </div>
-      <div class="fr"><label>Print time</label>
-        <div style="display:flex;gap:.5rem;align-items:center">
-          <input type="number" autocomplete="off" id="evm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
-          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
-          <input type="number" autocomplete="off" id="evm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
-          <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+      <div class="f2c">
+        <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
+        <div class="fr"><label>Filament cost</label><div id="evm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
+      </div>
+      <div class="f2c">
+        <div class="fr"><label>Equipment used</label>
+          <select id="evm-equipment" onchange="calcVerElectricity('evm')">
+            <option value="">Select equipment...</option>
+          </select>
+        </div>
+        <div class="fr"><label>Print time</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input type="number" autocomplete="off" id="evm-ph" placeholder="0" min="0" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
+            <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">hr</span>
+            <input type="number" autocomplete="off" id="evm-pm" placeholder="0" min="0" max="59" step="1" oninput="calcVerElectricity('evm')" style="width:80px"/>
+            <span style="font-size:.8125rem;color:var(--smoke);white-space:nowrap">min</span>
+          </div>
         </div>
       </div>
+      <div id="evm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
     </div>
-    <div id="evm-elec-calc" style="font-size:.8125rem;color:var(--smoke);background:var(--sand);border-radius:var(--rsm);padding:.5rem .75rem;margin-bottom:.75rem;display:none"></div>
+    <div id="evm-cost-thirdparty" style="display:none">
+      <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="evm-unit-cost" placeholder="0.00" step="0.01"/></div>
+      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="evm-supplier" placeholder="e.g. Bay Rubber Company"/></div>
+    </div>
+    <div id="evm-cost-other" style="display:none">
+      <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="evm-other-cost" placeholder="0.00" step="0.01"/></div>
+    </div>
     <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="evm-cn"/></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -798,10 +830,23 @@ async function uploadFile(ideaId,file,subfolder){
   return{url:data.publicUrl,name:file.name,size:file.size};
 }
 
+function toggleVerCostType(prefix){
+  const type=document.getElementById(prefix+'-cost-type')?.value||'3dprint';
+  ['3dprint','thirdparty','other'].forEach(t=>{
+    const el=document.getElementById(prefix+'-cost-'+t);
+    if(el)el.style.display=t===type?'block':'none';
+  });
+}
+
 function vcost(v){
   let t=0;
-  if(v.fg&&v.fcp)t+=parseFloat(v.fg)*parseFloat(v.fcp);
-  if(v.ph&&v.ec)t+=parseFloat(v.ph)*parseFloat(v.ec);
+  const ct=v.costType||'3dprint';
+  if(ct==='thirdparty'||ct==='other'){
+    t+=parseFloat(v.unitCost||0);
+  } else {
+    if(v.fg&&v.fcp)t+=parseFloat(v.fg)*parseFloat(v.fcp);
+    if(v.ph&&v.ec)t+=parseFloat(v.ph)*parseFloat(v.ec);
+  }
   if(v.oc)t+=parseFloat(v.oc);return t;
 }
 
@@ -933,11 +978,15 @@ function ideaHTML(idea){
         </div>`;}).join(''):'<div class="fv empty" style="margin-bottom:1rem">No components added yet.</div>'}
     </div>`;
 
+  const MARKUPS=[2,2.5,3,3.5,4,4.5,5];
+
   const itersHTML=`
     <div class="iter-list">
       ${iterations.length?[...iterations].reverse().map((iter,ri)=>{
         const realIdx=iterations.length-1-ri,isIterOpen=expandedIter[idea.id+'_'+realIdx];
         const total=iterTotal(iter,components),feedback=iter.feedback||[],pendingFb=feedback.filter(f=>f.status==='pending').length;
+        const minPrice=total>0?fmt$(total*2):'—';
+        const maxPrice=total>0?fmt$(total*5):'—';
         return `<div class="iter-card ${isIterOpen?'open':''}">
           <div class="iter-hdr" onclick="event.stopPropagation();toggleIter('${idea.id}',${realIdx})">
             ${iter.img?`<img src="${esc(iter.img)}" class="ithumb" onerror="this.style.display='none'"/>`:`<div class="ithumb-ph">&#128424;</div>`}
@@ -947,6 +996,7 @@ function ideaHTML(idea){
                 <span class="badge ${iter.status==='Final'?'bready':iter.status==='Archived'?'bpause':'bt'}">${iter.status||'Testing'}</span>
                 <span>${fD(iter.date)}</span>
                 ${total>0?`<span>Cost: <strong>${fmt$(total)}</strong></span>`:''}
+                ${total>0?`<span style="color:var(--gr)">Retail: <strong>${minPrice} – ${maxPrice}</strong></span>`:''}
                 ${pendingFb>0?`<span style="color:var(--am)">${pendingFb} open feedback</span>`:''}
               </div>
             </div>
@@ -957,7 +1007,7 @@ function ideaHTML(idea){
           </div>
           <div class="iter-body">
             ${iter.notes?`<div style="font-size:.875rem;color:var(--kiln);margin-bottom:1rem;line-height:1.6">${esc(iter.notes)}</div>`:''}
-            <div class="ast" style="margin-bottom:.5rem">Components</div>
+            <div class="ast" style="margin-bottom:.5rem">Components & cost</div>
             <div style="margin-bottom:1rem">
               ${(iter.compVersions||[]).map(cv=>{
                 const comp=components.find(c=>c.name===cv.compName);
@@ -965,18 +1015,15 @@ function ideaHTML(idea){
                 const vc=ver?vcost(ver):0;
                 return `<div class="cvr"><span class="cn2">${esc(cv.compName)}</span>${cv.unchanged?'<span class="cu2">unchanged</span>':`<span class="cv2">v${esc(cv.version)}</span>`}${vc>0?`<span class="cc3">${fmt$(vc)}</span>`:''}</div>`;
               }).join('')||'<div class="fv empty">No components recorded.</div>'}
+              ${iter.addCost?`<div class="cvr"><span class="cn2" style="color:var(--smoke)">Additional costs${iter.addNotes?' ('+esc(iter.addNotes)+')':''}</span><span class="cc3">${fmt$(iter.addCost)}</span></div>`:''}
+              ${total>0?`<div class="cvr" style="border-top:1px solid var(--b);margin-top:.25rem;padding-top:.5rem"><span class="cn2" style="font-weight:700">Total per unit</span><span style="font-weight:700;color:var(--clay)">${fmt$(total)}</span></div>`:''}
             </div>
-            ${total>0?`<div class="csb" style="margin-bottom:1rem">
-              ${(iter.compVersions||[]).map(cv=>{
-                if(cv.unchanged)return'';
-                const comp=components.find(c=>c.name===cv.compName);
-                const ver=comp?(comp.versions||[]).find(v=>v.num===cv.version):null;
-                const vc=ver?vcost(ver):0;if(!vc)return'';
-                return`<div class="csr sub"><span>${esc(cv.compName)} v${esc(cv.version)}</span><span>${fmt$(vc)}</span></div>`;
-              }).join('')}
-              ${iter.addCost?`<div class="csr sub"><span>Additional${iter.addNotes?' ('+esc(iter.addNotes)+')':''}</span><span>${fmt$(iter.addCost)}</span></div>`:''}
-              <div class="csr"><span>Total iteration cost</span><span>${fmt$(total)}</span></div>
-            </div>`:''}
+            ${total>0?`
+            <div class="ast" style="margin-bottom:.5rem">Pricing</div>
+            <table class="dt" style="margin-bottom:1rem">
+              <tr><th>Markup</th><th>Retail price</th><th>Margin</th></tr>
+              ${MARKUPS.map(m=>`<tr><td>${m}x</td><td><strong>${fmt$(total*m)}</strong></td><td>${((1-1/m)*100).toFixed(0)}%</td></tr>`).join('')}
+            </table>`:''}
             <div class="ast" style="margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem">
               Feedback
               <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openFbModal('${idea.id}',${realIdx})">+ Add</button>
@@ -1048,9 +1095,13 @@ function ideaHTML(idea){
   const pricing=idea.pricing||[];
   const cT=(items)=>items.length?`<table class="dt"><tr><th>Item</th><th>Cost</th><th>Notes</th><th></th></tr>${items.map(c=>{const ri=costs.indexOf(c);return`<tr><td>${esc(c.item)}</td><td>${fmt$(c.cost)}</td><td>${esc(c.note||'')}</td><td><button class="db" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','costs',${ri})">x</button></td></tr>`;}).join('')}</table>`:'<div class="fv empty" style="margin-bottom:.5rem">None added yet.</div>';
 
+  // Get latest iteration cost for financials
+  const latestIter=iterations.length?iterations[iterations.length-1]:null;
+  const latestIterCost=latestIter?iterTotal(latestIter,components):0;
+
   const financialsHTML=`
     <div class="ast" style="margin-bottom:.25rem">Setup / one-time costs</div>
-    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.5rem">Tooling, moulds, design fees</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.5rem">CAD design fees, tooling, moulds, sample costs</div>
     ${cT(sc)}${ts>0?`<div style="text-align:right;font-size:.8rem;margin-bottom:.75rem">Total: <strong>${fmt$(ts)}</strong></div>`:''}
     <div class="sf" style="margin-bottom:1.25rem">
       <div class="fg"><div class="frl">Item</div><input type="text" autocomplete="off" id="cost-setup-item-${idea.id}" onclick="event.stopPropagation()"/></div>
@@ -1059,28 +1110,26 @@ function ideaHTML(idea){
       <div class="fa"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','setup')">Add setup cost</button></div>
     </div>
     <hr class="sdiv"/>
-    <div class="ast" style="margin-bottom:.25rem">Manufacturing / per-unit costs</div>
-    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.5rem">Materials, labour, packaging per unit at scale</div>
-    ${cT(uc)}${tu>0?`<div style="text-align:right;font-size:.8rem;margin-bottom:.75rem">Total per unit: <strong>${fmt$(tu)}</strong></div>`:''}
-    <div class="sf" style="margin-bottom:1.25rem">
-      <div class="fg"><div class="frl">Item</div><input type="text" autocomplete="off" id="cost-unit-item-${idea.id}" onclick="event.stopPropagation()"/></div>
-      <div class="fg"><div class="frl">Amount ($)</div><input type="number" autocomplete="off" id="cost-unit-amt-${idea.id}" placeholder="0.00" step="0.01" onclick="event.stopPropagation()"/></div>
-      <div class="fg"><div class="frl">Notes</div><input type="text" autocomplete="off" id="cost-unit-note-${idea.id}" onclick="event.stopPropagation()"/></div>
-      <div class="fa"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addCost('${idea.id}','unit')">Add unit cost</button></div>
-    </div>
+    <div class="ast" style="margin-bottom:.5rem">Break-even calculator</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Based on your latest iteration cost and setup costs above.</div>
+    ${latestIterCost>0?`
+    <div style="background:var(--sand);border-radius:var(--rmd);padding:1rem;margin-bottom:1rem">
+      <div style="font-size:.8125rem;color:var(--smoke);margin-bottom:.75rem">Latest iteration cost per unit: <strong style="color:var(--clay)">${fmt$(latestIterCost)}</strong>${latestIter?' ('+esc(latestIter.name||'Iteration '+latestIter.num)+')':''}</div>
+      <table class="dt" style="margin-bottom:.75rem">
+        <tr><th>Retail price</th><th>Margin</th><th>Units to break even</th></tr>
+        ${MARKUPS.map(m=>{
+          const price=latestIterCost*m;
+          const margin=((1-1/m)*100).toFixed(0);
+          const breakEven=ts>0?Math.ceil(ts/(price-latestIterCost)):'—';
+          return`<tr><td><strong>${fmt$(price)}</strong> (${m}x)</td><td>${margin}%</td><td>${breakEven}</td></tr>`;
+        }).join('')}
+      </table>
+      ${ts>0?`<div style="font-size:.75rem;color:var(--fog)">Break-even = setup costs (${fmt$(ts)}) / (price - unit cost)</div>`:'<div style="font-size:.75rem;color:var(--fog)">Add setup costs above to see break-even units</div>'}
+    </div>`:`<div class="fv empty" style="margin-bottom:1rem">Create an iteration with component costs to see break-even analysis.</div>`}
     <hr class="sdiv"/>
-    <div class="ast" style="margin-bottom:.5rem">Pricing calculator</div>
-    <div style="background:var(--sand);border-radius:var(--rmd);padding:.875rem 1rem;margin-bottom:1rem">
-      <div class="frl" style="margin-bottom:.4rem">Multiply per-unit cost${tu>0?` (${fmt$(tu)})`:' - add unit costs above'}</div>
-      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-        <select id="mult-${idea.id}" onchange="event.stopPropagation();updateMult('${idea.id}')" onclick="event.stopPropagation()" style="padding:.4rem .6rem;border:1px solid var(--bm);border-radius:var(--rsm);font-family:var(--fb);font-size:.8125rem;background:var(--w)">
-          <option value="">Select multiplier...</option>
-          ${[2,2.5,3,3.5,4,4.5,5,5.5,6].map(m=>`<option value="${m}">${m}x cost</option>`).join('')}
-        </select>
-        <div id="mult-result-${idea.id}" style="font-size:.875rem;color:var(--kiln)"></div>
-      </div>
-    </div>
-    ${pricing.length?`<table class="dt"><tr><th>Tier</th><th>Price</th><th>Notes</th><th>Margin</th><th></th></tr>${pricing.map((p,i)=>`<tr><td>${esc(p.tier)}</td><td>${fmt$(p.price)}</td><td>${esc(p.note||'')}</td><td>${tu&&p.price?calcMargin(tu,p.price):'--'}</td><td><button class="db" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','pricing',${i})">x</button></td></tr>`).join('')}</table>`:'<div class="fv empty" style="margin-bottom:.75rem">No pricing saved yet.</div>'}
+    <div class="ast" style="margin-bottom:.5rem">Saved pricing tiers</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Record your decided pricing for different channels.</div>
+    ${pricing.length?`<table class="dt"><tr><th>Tier / channel</th><th>Price</th><th>Notes</th><th>Margin on latest</th><th></th></tr>${pricing.map((p,i)=>`<tr><td>${esc(p.tier)}</td><td>${fmt$(p.price)}</td><td>${esc(p.note||'')}</td><td>${latestIterCost&&p.price?calcMargin(latestIterCost,p.price):'--'}</td><td><button class="db" onclick="event.stopPropagation();deleteArrayItem('${idea.id}','pricing',${i})">x</button></td></tr>`).join('')}</table>`:'<div class="fv empty" style="margin-bottom:.75rem">No pricing saved yet.</div>'}
     <div class="sf">
       <div class="fg"><div class="frl">Tier / channel</div><input type="text" autocomplete="off" id="price-tier-${idea.id}" onclick="event.stopPropagation()"/></div>
       <div class="fg"><div class="frl">Price ($)</div><input type="number" autocomplete="off" id="price-amt-${idea.id}" placeholder="0.00" step="0.01" onclick="event.stopPropagation()"/></div>
@@ -1122,7 +1171,7 @@ function ideaHTML(idea){
 
   const fileRefs=idea.file_refs||[];
   const filesHTML=`
-    <div style="font-size:.8125rem;color:var(--smoke);margin-bottom:.75rem">Add MEGA links or any URL to reference files. Images will preview inline.</div>
+    <div style="font-size:.8125rem;color:var(--smoke);margin-bottom:.75rem">Upload files directly or add links to files stored elsewhere.</div>
     <div class="il">
       ${fileRefs.length?fileRefs.map((r,i)=>`<div class="ic2"><button class="idel" onclick="deleteArrayItem('${idea.id}','file_refs',${i})">x</button>
         ${renderFileRef(r)}
@@ -1130,8 +1179,19 @@ function ideaHTML(idea){
     </div>
     <div class="sf">
       <div class="fg"><div class="frl">Label *</div><input type="text" autocomplete="off" id="fref-label-${idea.id}" onclick="event.stopPropagation()"/></div>
-      <div class="fg"><div class="frl">MEGA link or URL</div><input type="text" autocomplete="off" id="fref-url-${idea.id}" placeholder="Paste MEGA shareable link here" onclick="event.stopPropagation()"/></div>
+      <div class="fg"><div class="frl">Upload a file (any type)</div>
+        <div class="upload-area" onclick="event.stopPropagation();document.getElementById('fref-file-${idea.id}').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handleFrefDrop('${idea.id}',event)">
+          <input type="file" id="fref-file-${idea.id}" onchange="previewFrefFile('${idea.id}',this)" onclick="event.stopPropagation()"/>
+          <p style="font-size:.8125rem;color:var(--smoke)">Drag & drop or click — PDFs, images, docs, quotes, anything</p>
+        </div>
+        <div id="fref-preview-${idea.id}" style="margin-top:.4rem"></div>
+      </div>
+      <div class="fg"><div class="frl">Or paste a URL / MEGA link</div><input type="text" autocomplete="off" id="fref-url-${idea.id}" placeholder="https://..." onclick="event.stopPropagation()"/></div>
       <div class="fg"><div class="frl">Notes</div><textarea autocomplete="off" id="fref-note-${idea.id}" rows="2" onclick="event.stopPropagation()"></textarea></div>
+      <div class="fa" id="fref-upload-status-${idea.id}"></div>
       <div class="fa"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addFileRef('${idea.id}')">Add file reference</button></div>
     </div>`;
 
@@ -1344,7 +1404,9 @@ function openVerModal(ideaId,ci){
   ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-pm','vm-oc','vm-cn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const flSel=document.getElementById('vm-filament-lot');if(flSel)flSel.value='';
   const flCalc=document.getElementById('vm-filament-calc');if(flCalc){flCalc.innerHTML='Select lot + enter grams';flCalc.style.color='var(--fog)';}
-  clearVerPending('vm');
+  const flHidden=document.getElementById('vm-fcp-calc');if(flHidden)flHidden.value='';
+  const flLotHidden=document.getElementById('vm-lot-id');if(flLotHidden)flLotHidden.value='';  clearVerPending('vm');
+  const vmCt=document.getElementById('vm-cost-type');if(vmCt){vmCt.value='3dprint';toggleVerCostType('vm');}
   document.getElementById('ver-modal').classList.add('open');
   populateEquipmentDropdowns();
   populateFilamentDropdowns();
@@ -1364,11 +1426,17 @@ async function saveVersion(){
   const ideaId=document.getElementById('vm-idea-id').value;
   const ci=parseInt(document.getElementById('vm-comp-idx').value);
   const idea=ideas.find(i=>i.id===ideaId),components=[...(idea.components||[])],comp={...components[ci]};
-  const versions=[...(comp.versions||[])],num=versions.length?bumpV(versions[0].num):'1.0';
+  const versions=[...(comp.versions||[])],num=versions.length?bumpV(versions[0].num):'1';
 
   showToast('Saving...');
   const {images,files}=await uploadPendingVerFiles(ideaId,'vm',[],[]);
+  const costType=document.getElementById('vm-cost-type')?.value||'3dprint';
+  const unitCost=costType==='thirdparty'?parseFloat(document.getElementById('vm-unit-cost').value)||0:
+                 costType==='other'?parseFloat(document.getElementById('vm-other-cost').value)||0:0;
+  const supplier=costType==='thirdparty'?document.getElementById('vm-supplier').value.trim():'';
+
   versions.unshift({num,notes,who:document.getElementById('vm-who').value.trim(),date:new Date().toISOString(),
+    costType,unitCost,supplier,
     fg:parseFloat(document.getElementById('vm-fg').value)||0,
     fcp:parseFloat(document.getElementById('vm-fcp-calc')?.value)||0,
     filamentLotId:document.getElementById('vm-lot-id')?.value||'',
@@ -1806,11 +1874,39 @@ function renderFileRef(r, compact=false){
   </div>`;
 }
 
+function previewFrefFile(id,input){
+  const file=input.files[0];if(!file)return;
+  pendingFiles[id+'_fref']=file;
+  const ext=(file.name.split('.').pop()||'').toUpperCase();
+  const icons={STL:'🧊',OBJ:'🧊',STEP:'📐',STP:'📐',F3D:'🧊',PDF:'📄',ZIP:'📦'};
+  const icon=icons[ext]||'📎';
+  const preview=document.getElementById('fref-preview-'+id);
+  if(preview)preview.innerHTML=`<div class="frc"><div class="frc-icon">${icon}</div><div class="frc-info"><div class="frc-label">${esc(file.name)}</div><div class="frc-meta">${ext} · ${(file.size/1024/1024).toFixed(1)}MB · will upload on save</div></div></div>`;
+}
+function handleFrefDrop(id,event){
+  const file=event.dataTransfer.files[0];if(!file)return;
+  pendingFiles[id+'_fref']=file;
+  const inp={files:[file]};previewFrefFile(id,inp);
+}
 async function addFileRef(id){
   const label=document.getElementById('fref-label-'+id).value.trim();if(!label)return;
   const idea=ideas.find(i=>i.id===id);
-  const file_refs=[...(idea.file_refs||[]),{label,url:document.getElementById('fref-url-'+id).value.trim(),note:document.getElementById('fref-note-'+id).value.trim()}];
-  if(await patchIdea(id,{file_refs})){renderList();showToast('File reference added');}
+  let url=document.getElementById('fref-url-'+id).value.trim();
+  const pendingFile=pendingFiles[id+'_fref'];
+  if(pendingFile&&!url){
+    const status=document.getElementById('fref-upload-status-'+id);
+    if(status)status.innerHTML='<span style="font-size:.8125rem;color:var(--clay)">Uploading...</span>';
+    const result=await uploadFile(id,pendingFile,'project-files');
+    if(result)url=result.url;
+    if(status)status.innerHTML='';
+  }
+  const file_refs=[...(idea.file_refs||[]),{label,url,note:document.getElementById('fref-note-'+id).value.trim()}];
+  if(await patchIdea(id,{file_refs})){
+    delete pendingFiles[id+'_fref'];
+    const preview=document.getElementById('fref-preview-'+id);if(preview)preview.innerHTML='';
+    const fi=document.getElementById('fref-file-'+id);if(fi)fi.value='';
+    renderList();showToast('File reference added');
+  }
 }
 async function deleteArrayItem(id,field,idx){
   const idea=ideas.find(i=>i.id===id),arr=(idea[field]||[]).filter((_,i)=>i!==idx);
@@ -2127,7 +2223,19 @@ function openEditVerModal(ideaId,ci,vi){
   document.getElementById('evm-ver-num').value=v.num||'';
   document.getElementById('evm-who').value=v.who||'';
   document.getElementById('evm-notes').value=v.notes||'';
+  const ctSel=document.getElementById('evm-cost-type');
+  if(ctSel){ctSel.value=v.costType||'3dprint';toggleVerCostType('evm');}
+  if(v.costType==='thirdparty'){
+    const uc=document.getElementById('evm-unit-cost');if(uc)uc.value=v.unitCost||'';
+    const sup=document.getElementById('evm-supplier');if(sup)sup.value=v.supplier||'';
+  } else if(v.costType==='other'){
+    const oc2=document.getElementById('evm-other-cost');if(oc2)oc2.value=v.unitCost||'';
+  }
   document.getElementById('evm-fg').value=v.fg||'';
+  // Reset filament calc display
+  const eflCalc=document.getElementById('evm-filament-calc');
+  if(eflCalc){eflCalc.innerHTML='Select lot + enter grams';eflCalc.style.color='var(--fog)';}
+  const eflHidden=document.getElementById('evm-fcp-calc');if(eflHidden)eflHidden.value='';
   // Restore hours/minutes from stored decimal hours
   const totalHours=parseFloat(v.ph)||0;
   document.getElementById('evm-ph').value=Math.floor(totalHours)||'';
@@ -2176,7 +2284,13 @@ async function saveEditVersion(){
   showToast('Saving...');
   const {images,files}=await uploadPendingVerFiles(ideaId,'evm',existing.images||[],existing.files||[]);
   const num=document.getElementById('evm-ver-num').value.trim()||existing.num;
+  const costType=document.getElementById('evm-cost-type')?.value||existing.costType||'3dprint';
+  const unitCost=costType==='thirdparty'?parseFloat(document.getElementById('evm-unit-cost').value)||0:
+                 costType==='other'?parseFloat(document.getElementById('evm-other-cost').value)||0:0;
+  const supplier=costType==='thirdparty'?document.getElementById('evm-supplier').value.trim():existing.supplier||'';
+
   versions[vi]={...existing,num,notes,who:document.getElementById('evm-who').value.trim(),
+    costType,unitCost,supplier,
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
     fcp:parseFloat(document.getElementById('evm-fcp-calc')?.value)||existing.fcp||0,
     filamentLotId:document.getElementById('evm-lot-id')?.value||existing.filamentLotId||'',
