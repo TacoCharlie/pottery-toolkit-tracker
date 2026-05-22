@@ -348,9 +348,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="vm-notes" placeholder="Describe what changed in this version..."></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Cost to produce this version</div>
+    <div class="fr"><label>Filament lot used</label>
+      <select id="vm-filament-lot" onchange="calcVerFilament('vm')">
+        <option value="">Select filament lot...</option>
+      </select>
+    </div>
     <div class="f2c">
-      <div class="fr"><label>Filament (grams)</label><input type="number" autocomplete="off" id="vm-fg" placeholder="0" step="0.1"/></div>
-      <div class="fr"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="vm-fcp" placeholder="0.00" step="0.01"/></div>
+      <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="vm-fg" placeholder="0" step="0.1" oninput="calcVerFilament('vm')"/></div>
+      <div class="fr"><label>Filament cost</label><div id="vm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
     </div>
     <div class="f2c">
       <div class="fr"><label>Equipment used</label>
@@ -477,9 +482,14 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Cost to produce this version</div>
+    <div class="fr"><label>Filament lot used</label>
+      <select id="evm-filament-lot" onchange="calcVerFilament('evm')">
+        <option value="">Select filament lot...</option>
+      </select>
+    </div>
     <div class="f2c">
-      <div class="fr"><label>Filament (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
-      <div class="fr"><label>Cost per gram ($)</label><input type="number" autocomplete="off" id="evm-fcp" step="0.01"/></div>
+      <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
+      <div class="fr"><label>Filament cost</label><div id="evm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
     </div>
     <div class="f2c">
       <div class="fr"><label>Equipment used</label>
@@ -623,6 +633,35 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       </div>
       <div style="display:flex;justify-content:flex-end">
         <button class="btn btn-ghost btn-sm" onclick="addEquipment()">Add equipment</button>
+      </div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--b);margin:1.25rem 0"/>
+    <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.25rem">Filament lots</div>
+    <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Each lot is a purchase event. Add a new lot when you buy more filament. Mark as depleted when you run out.</div>
+    <div id="settings-filament-list" style="margin-bottom:1rem"></div>
+    <div style="background:var(--sand);border-radius:var(--rmd);padding:1rem;margin-bottom:1rem">
+      <div style="font-size:.75rem;font-weight:600;color:var(--smoke);margin-bottom:.75rem">Add filament lot</div>
+      <div class="f2c">
+        <div class="fr"><label>Material</label><input type="text" autocomplete="off" id="fl-material" placeholder="e.g. PCTG, PLA+, ABS"/></div>
+        <div class="fr"><label>Color</label><input type="text" autocomplete="off" id="fl-color" placeholder="e.g. Lime Green, Black"/></div>
+      </div>
+      <div class="f2c">
+        <div class="fr"><label>Diameter (mm)</label>
+          <select id="fl-diameter">
+            <option value="1.75">1.75mm</option>
+            <option value="2.85">2.85mm</option>
+          </select>
+        </div>
+        <div class="fr"><label>Spool weight (g)</label><input type="number" autocomplete="off" id="fl-spool-wt" placeholder="e.g. 1000"/></div>
+      </div>
+      <div class="f2c">
+        <div class="fr"><label>Number of spools</label><input type="number" autocomplete="off" id="fl-qty" placeholder="e.g. 6" min="1" step="1"/></div>
+        <div class="fr"><label>Total cost paid ($)</label><input type="number" autocomplete="off" id="fl-cost" placeholder="e.g. 264.15" step="0.01" oninput="previewFilamentCPG()"/></div>
+      </div>
+      <div class="fr"><label>Brand / supplier (optional)</label><input type="text" autocomplete="off" id="fl-brand" placeholder="e.g. Polymaker, Bambu Lab"/></div>
+      <div id="fl-cpg-preview" style="font-size:.8125rem;color:var(--smoke);background:var(--w);border-radius:var(--rsm);padding:.5rem .75rem;display:none;margin-bottom:.5rem"></div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="addFilamentLot()">Add lot</button>
       </div>
     </div>
     <div class="fac">
@@ -1272,9 +1311,12 @@ function openVerModal(ideaId,ci){
   document.getElementById('ver-modal-title').textContent='Log version - '+(comp?.name||'Component');
   document.getElementById('vm-next-num').innerHTML=`Next version: <strong style="color:var(--clay)">v${nextNum}</strong>`;
   ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-pm','vm-oc','vm-cn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const flSel=document.getElementById('vm-filament-lot');if(flSel)flSel.value='';
+  const flCalc=document.getElementById('vm-filament-calc');if(flCalc){flCalc.innerHTML='Select lot + enter grams';flCalc.style.color='var(--fog)';}
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
   populateEquipmentDropdowns();
+  populateFilamentDropdowns();
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
 function closeVerModal(){document.getElementById('ver-modal').classList.remove('open');}
@@ -1297,7 +1339,8 @@ async function saveVersion(){
   const {images,files}=await uploadPendingVerFiles(ideaId,'vm',[],[]);
   versions.unshift({num,notes,who:document.getElementById('vm-who').value.trim(),date:new Date().toISOString(),
     fg:parseFloat(document.getElementById('vm-fg').value)||0,
-    fcp:parseFloat(document.getElementById('vm-fcp').value)||0,
+    fcp:parseFloat(document.getElementById('vm-fcp-calc')?.value)||0,
+    filamentLotId:document.getElementById('vm-lot-id')?.value||'',
     ph:parseFloat(document.getElementById('vm-ph-total')?.value)||(parseFloat(document.getElementById('vm-ph').value)||0),
     ec:getCalcElecCost('vm'),
     equipmentId:document.getElementById('vm-equipment').value,
@@ -1757,14 +1800,23 @@ async function loadSettings(){
   try{
     const {data,error}=await db.from('settings').select('*').eq('id','global').single();
     if(!error&&data){
-      appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[]};
+      appSettings={
+        cost_per_kwh:parseFloat(data.cost_per_kwh||0),
+        equipment:data.equipment||[],
+        filamentLots:data.filament_lots||[]
+      };
     }
   }catch(e){console.log('Settings not loaded:',e);}
 }
 
 async function saveSettings(){
   const kwh=parseFloat(document.getElementById('s-kwh').value)||0;
-  const {error}=await db.from('settings').upsert({id:'global',cost_per_kwh:kwh,equipment:appSettings.equipment,updated_at:new Date().toISOString()});
+  const {error}=await db.from('settings').upsert({
+    id:'global',cost_per_kwh:kwh,
+    equipment:appSettings.equipment,
+    filament_lots:appSettings.filamentLots||[],
+    updated_at:new Date().toISOString()
+  });
   if(error){showToast('Error saving settings');return;}
   appSettings.cost_per_kwh=kwh;
   closeSettings();showToast('Settings saved');
@@ -1807,9 +1859,112 @@ function renderEquipmentList(){
 function openSettings(){
   document.getElementById('s-kwh').value=appSettings.cost_per_kwh||'';
   renderEquipmentList();
+  renderFilamentList();
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+
+function previewFilamentCPG(){
+  const cost=parseFloat(document.getElementById('fl-cost').value)||0;
+  const qty=parseFloat(document.getElementById('fl-qty').value)||0;
+  const spoolWt=parseFloat(document.getElementById('fl-spool-wt').value)||0;
+  const preview=document.getElementById('fl-cpg-preview');
+  if(cost&&qty&&spoolWt){
+    const totalG=qty*spoolWt;
+    const cpg=cost/totalG;
+    preview.style.display='block';
+    preview.innerHTML=`${fmt$(cost)} / ${totalG}g total = <strong style="color:var(--clay)">${fmt$(cpg)}/g</strong>`;
+  } else {
+    preview.style.display='none';
+  }
+}
+
+function addFilamentLot(){
+  const material=document.getElementById('fl-material').value.trim();
+  const color=document.getElementById('fl-color').value.trim();
+  const cost=parseFloat(document.getElementById('fl-cost').value)||0;
+  const qty=parseFloat(document.getElementById('fl-qty').value)||0;
+  const spoolWt=parseFloat(document.getElementById('fl-spool-wt').value)||0;
+  if(!material||!cost||!qty||!spoolWt){showToast('Please fill in material, quantity, spool weight, and cost');return;}
+  const totalG=qty*spoolWt;
+  const cpg=cost/totalG;
+  if(!appSettings.filamentLots)appSettings.filamentLots=[];
+  appSettings.filamentLots.push({
+    id:Date.now().toString(),
+    material,color,
+    diameter:document.getElementById('fl-diameter').value,
+    spoolWt,qty,cost,totalG,cpg,
+    brand:document.getElementById('fl-brand').value.trim(),
+    date:new Date().toISOString().split('T')[0],
+    depleted:false
+  });
+  ['fl-material','fl-color','fl-qty','fl-cost','fl-brand'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fl-spool-wt').value='';
+  document.getElementById('fl-cpg-preview').style.display='none';
+  renderFilamentList();
+  showToast('Filament lot added');
+}
+
+function toggleFilamentDepleted(idx){
+  appSettings.filamentLots[idx].depleted=!appSettings.filamentLots[idx].depleted;
+  renderFilamentList();
+  populateFilamentDropdowns();
+}
+
+function removeFilamentLot(idx){
+  if(!confirm('Remove this filament lot? Historical cost data referencing it will be kept.'))return;
+  appSettings.filamentLots.splice(idx,1);
+  renderFilamentList();
+}
+
+function renderFilamentList(){
+  const list=document.getElementById('settings-filament-list');if(!list)return;
+  const lots=appSettings.filamentLots||[];
+  if(!lots.length){list.innerHTML='<div class="fv empty" style="margin-bottom:.5rem">No filament lots added yet.</div>';return;}
+  list.innerHTML=lots.map((l,i)=>`
+    <div class="frc" style="margin-bottom:.4rem;${l.depleted?'opacity:.5':''}">
+      <div class="frc-icon" style="font-size:.75rem;font-weight:700;color:var(--clay);background:var(--clay-l);width:38px;height:38px">${l.diameter}mm</div>
+      <div class="frc-info">
+        <div class="frc-label">${esc(l.material)}${l.color?' - '+esc(l.color):''}${l.depleted?' (depleted)':''}</div>
+        <div class="frc-meta">${l.qty} x ${l.spoolWt}g spools · ${fmt$(l.cpg)}/g · Total ${fmt$(l.cost)}${l.brand?' · '+esc(l.brand):''}</div>
+      </div>
+      <div style="display:flex;gap:.35rem;flex-shrink:0">
+        <button class="btn btn-ghost btn-xs" onclick="toggleFilamentDepleted(${i})">${l.depleted?'Restock':'Deplete'}</button>
+        <button class="btn btn-danger btn-xs" onclick="removeFilamentLot(${i})">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function populateFilamentDropdowns(){
+  ['vm-filament-lot','evm-filament-lot'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const current=sel.value;
+    const activeLots=(appSettings.filamentLots||[]).filter(l=>!l.depleted);
+    sel.innerHTML='<option value="">Select filament lot...</option>'+
+      activeLots.map(l=>`<option value="${esc(l.id)}">${esc(l.material)}${l.color?' - '+esc(l.color):''} (${fmt$(l.cpg)}/g)</option>`).join('');
+    if(current)sel.value=current;
+  });
+}
+
+function calcVerFilament(prefix){
+  const sel=document.getElementById(prefix+'-filament-lot');
+  const fgEl=document.getElementById(prefix+'-fg');
+  const calcEl=document.getElementById(prefix+'-filament-calc');
+  if(!sel||!fgEl||!calcEl)return;
+  const lotId=sel.value;
+  const grams=parseFloat(fgEl.value)||0;
+  const lot=(appSettings.filamentLots||[]).find(l=>l.id===lotId);
+  if(!lot||!grams){calcEl.innerHTML='Select lot + enter grams';calcEl.style.color='var(--fog)';return;}
+  const cost=grams*lot.cpg;
+  calcEl.innerHTML=`<strong style="color:var(--clay)">${fmt$(cost)}</strong> <span style="color:var(--fog)">(${grams}g x ${fmt$(lot.cpg)}/g)</span>`;
+  // Store for saving
+  let hidden=document.getElementById(prefix+'-fcp-calc');
+  if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.id=prefix+'-fcp-calc';fgEl.parentElement.appendChild(hidden);}
+  hidden.value=lot.cpg.toFixed(6);
+  let lotHidden=document.getElementById(prefix+'-lot-id');
+  if(!lotHidden){lotHidden=document.createElement('input');lotHidden.type='hidden';lotHidden.id=prefix+'-lot-id';fgEl.parentElement.appendChild(lotHidden);}
+  lotHidden.value=lotId;
+}
 
 function populateEquipmentDropdowns(){
   ['vm-equipment','evm-equipment'].forEach(id=>{
@@ -1921,6 +2076,12 @@ function openEditVerModal(ideaId,ci,vi){
   ).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
   populateEquipmentDropdowns();
+  populateFilamentDropdowns();
+  if(v.filamentLotId){
+    const lotSel=document.getElementById('evm-filament-lot');
+    if(lotSel)lotSel.value=v.filamentLotId;
+    calcVerFilament('evm');
+  }
   // Restore equipment selection if saved
   if(v.equipmentId)document.getElementById('evm-equipment').value=v.equipmentId||'';
   calcVerElectricity('evm');
@@ -1942,7 +2103,8 @@ async function saveEditVersion(){
   const num=document.getElementById('evm-ver-num').value.trim()||existing.num;
   versions[vi]={...existing,num,notes,who:document.getElementById('evm-who').value.trim(),
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
-    fcp:parseFloat(document.getElementById('evm-fcp').value)||0,
+    fcp:parseFloat(document.getElementById('evm-fcp-calc')?.value)||existing.fcp||0,
+    filamentLotId:document.getElementById('evm-lot-id')?.value||existing.filamentLotId||'',
     ph:parseFloat(document.getElementById('evm-ph-total')?.value)||(parseFloat(document.getElementById('evm-ph').value)||0),
     ec:getCalcElecCost('evm'),
     equipmentId:document.getElementById('evm-equipment').value,
