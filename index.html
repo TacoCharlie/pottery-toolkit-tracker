@@ -1191,7 +1191,7 @@ function openVerModal(ideaId,ci){
   const nextNum=versions.length?bumpV(versions[0].num):'1';
   document.getElementById('ver-modal-title').textContent='Log version - '+(comp?.name||'Component');
   document.getElementById('vm-next-num').innerHTML=`Next version: <strong style="color:var(--clay)">v${nextNum}</strong>`;
-  ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-ec','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
+  ['vm-who','vm-notes','vm-fg','vm-fcp','vm-ph','vm-oc','vm-cn'].forEach(id=>document.getElementById(id).value='');
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
   populateEquipmentDropdowns();
