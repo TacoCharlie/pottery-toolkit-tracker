@@ -2052,7 +2052,6 @@ function openEditVerModal(ideaId,ci,vi){
   document.getElementById('evm-who').value=v.who||'';
   document.getElementById('evm-notes').value=v.notes||'';
   document.getElementById('evm-fg').value=v.fg||'';
-  document.getElementById('evm-fcp').value=v.fcp||'';
   // Restore hours/minutes from stored decimal hours
   const totalHours=parseFloat(v.ph)||0;
   document.getElementById('evm-ph').value=Math.floor(totalHours)||'';
