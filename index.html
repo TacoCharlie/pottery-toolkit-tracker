@@ -577,7 +577,7 @@ function tryLogin(){
   const pw=document.getElementById('pw-input').value;
   if(pw===APP_PASSWORD){
     sessionStorage.setItem('ptk_auth','1');
-    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('auth-screen').remove();
     document.getElementById('app').style.display='block';
     loadIdeas();
   } else {
@@ -588,7 +588,8 @@ function tryLogin(){
 }
 document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
 if(sessionStorage.getItem('ptk_auth')==='1'){
-  document.getElementById('auth-screen').style.display='none';
+  const authEl=document.getElementById('auth-screen');
+  if(authEl)authEl.remove();
   document.getElementById('app').style.display='block';
   loadIdeas();
 }
@@ -742,6 +743,9 @@ function ideaHTML(idea){
     </div>`;
 
   const compsHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.75rem">
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openCompModal('${idea.id}')">+ Add component</button>
+    </div>
     <div class="comp-list">
       ${components.length?components.map((c,ci)=>{
         const isOpen2=expandedComp[idea.id+'_'+ci],versions=c.versions||[],lv=versions[0],lc=lv?vcost(lv):0;
@@ -758,6 +762,7 @@ function ideaHTML(idea){
             </div>
             <div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openCompModal('${idea.id}',${ci})">Edit</button>
+              <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openVerModal('${idea.id}',${ci})">+ Version</button>
               ${c.final?`<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();toggleCompFinal('${idea.id}',${ci},false)">Unmark final</button>`:`<button class="btn btn-success btn-xs" onclick="event.stopPropagation();toggleCompFinal('${idea.id}',${ci},true)">Mark final</button>`}
               <svg class="cchev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -777,11 +782,9 @@ function ideaHTML(idea){
               ${(v.images||[]).length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.4rem;margin-top:.5rem">${(v.images||[]).map(img=>`<img src="${esc(img)}" style="width:100%;height:100px;object-fit:cover;border-radius:var(--rsm);cursor:pointer;display:block" onclick="event.stopPropagation();openImgViewer('${esc(img)}')" onerror="this.style.display='none'"/>`).join('')}</div>`:''}
               ${(v.files||[]).length?`<div style="margin-top:.5rem">${(v.files||[]).map(f=>renderFileRef({label:f.name||'Design file',url:f.url})).join('')}</div>`:''}
             </div>`;}).join('')}</div>`:'<div class="fv empty" style="margin-bottom:1rem">No versions logged yet.</div>'}
-            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openVerModal('${idea.id}',${ci})">+ Log new version</button>
           </div>
         </div>`;}).join(''):'<div class="fv empty" style="margin-bottom:1rem">No components added yet.</div>'}
-    </div>
-    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openCompModal('${idea.id}')">+ Add component</button>`;
+    </div>`;
 
   const itersHTML=`
     <div class="iter-list">
