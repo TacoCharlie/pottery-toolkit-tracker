@@ -466,17 +466,6 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <input type="hidden" id="evm-comp-idx"/>
     <input type="hidden" id="evm-ver-idx"/>
     <div class="fr"><label>Version number</label><input type="text" autocomplete="off" id="evm-ver-num" placeholder="e.g. 1, 2, 3"/></div>
-    <div id="move-ver-panel" style="display:none;background:var(--sand);border-radius:var(--rmd);padding:1rem;margin-bottom:1rem">
-      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.5rem">Move to component</div>
-      <div style="font-size:.75rem;color:var(--fog);margin-bottom:.75rem">Version will be added to the destination component and both will be renumbered chronologically.</div>
-      <div class="fr"><label>Destination component</label>
-        <select id="move-ver-target"></select>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem">
-        <button class="btn btn-ghost btn-sm" onclick="toggleMoveVersion()">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="moveVersion()">Move version</button>
-      </div>
-    </div>
     <div class="fr"><label>Who worked on this?</label><input type="text" autocomplete="off" id="evm-who"/></div>
     <div class="fr"><label>What changed? *</label><textarea autocomplete="off" id="evm-notes"></textarea></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
@@ -524,6 +513,21 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
       <button class="btn btn-ghost" onclick="toggleMoveVersion()">Move to component</button>
       <button class="btn btn-ghost" onclick="closeEditVerModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditVersion()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE VERSION MODAL -->
+<div class="modal-backdrop" id="move-ver-modal" onclick="if(event.target===this)closeMoveVerModal()">
+  <div class="modal">
+    <h2>Move version to component</h2>
+    <p style="font-size:.875rem;color:var(--smoke);margin-bottom:1.5rem">The version will be moved to the selected component and both components will be renumbered chronologically.</p>
+    <div class="fr"><label>Destination component</label>
+      <select id="move-ver-target"></select>
+    </div>
+    <div class="fac">
+      <button class="btn btn-ghost" onclick="closeMoveVerModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="moveVersion()">Move version</button>
     </div>
   </div>
 </div>
@@ -1843,7 +1847,6 @@ function openEditVerModal(ideaId,ci,vi){
     `<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${ideaId}',${ci},${vi},${i})">Remove</button>`
   ).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
-  const mvp=document.getElementById('move-ver-panel');if(mvp)mvp.style.display='none';
   populateEquipmentDropdowns();
   // Restore equipment selection if saved
   if(v.equipmentId)document.getElementById('evm-equipment').value=v.equipmentId||'';
@@ -1881,21 +1884,17 @@ async function saveEditVersion(){
 }
 
 function toggleMoveVersion(){
-  const panel=document.getElementById('move-ver-panel');
-  const isOpen=panel.style.display!=='none';
-  panel.style.display=isOpen?'none':'block';
-  if(!isOpen){
-    // Populate destination dropdown with other components
-    const ideaId=document.getElementById('evm-idea-id').value;
-    const ci=parseInt(document.getElementById('evm-comp-idx').value);
-    const idea=ideas.find(i=>i.id===ideaId);
-    const sel=document.getElementById('move-ver-target');
-    sel.innerHTML=(idea.components||[])
-      .map((c,i)=>i===ci?null:`<option value="${i}">${esc(c.name)}</option>`)
-      .filter(Boolean).join('');
-    if(!sel.innerHTML)sel.innerHTML='<option disabled>No other components exist — create one first</option>';
-  }
+  const ideaId=document.getElementById('evm-idea-id').value;
+  const ci=parseInt(document.getElementById('evm-comp-idx').value);
+  const idea=ideas.find(i=>i.id===ideaId);
+  const sel=document.getElementById('move-ver-target');
+  sel.innerHTML=(idea.components||[])
+    .map((c,i)=>i===ci?null:`<option value="${i}">${esc(c.name)}</option>`)
+    .filter(Boolean).join('');
+  if(!sel.innerHTML)sel.innerHTML='<option disabled>No other components — create one first</option>';
+  document.getElementById('move-ver-modal').classList.add('open');
 }
+function closeMoveVerModal(){document.getElementById('move-ver-modal').classList.remove('open');}
 
 async function moveVersion(){
   const ideaId=document.getElementById('evm-idea-id').value;
@@ -1923,8 +1922,8 @@ async function moveVersion(){
   components[targetCi].versions=[...dstSorted].reverse();
 
   if(await patchIdea(ideaId,{components})){
-    closeEditVerModal();renderList();
-    showToast(`Version moved to ${esc(components[targetCi].name)}`);
+    closeMoveVerModal();closeEditVerModal();renderList();
+    showToast(`Version moved to ${components[targetCi].name}`);
   }
 }
 
@@ -1947,7 +1946,7 @@ async function deleteVersion(){
 
 function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');}
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();closeSettings();}
+  if(e.key==='Escape'){closeModal();closeCompModal();closeVerModal();closeIterModal();closeFbModal();closeEditVerModal();closeSettings();closeMoveVerModal();}
 });
 let toastTimer;
 function showToast(msg){
