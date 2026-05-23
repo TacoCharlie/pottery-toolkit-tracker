@@ -757,6 +757,23 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
   </div>
 </div>
 
+<!-- EDIT LINK MODAL -->
+<div class="modal-backdrop" id="edit-link-modal" onclick="if(event.target===this)closeEditLinkModal()">
+  <div class="modal">
+    <h2>Edit link</h2>
+    <input type="hidden" id="elm-entity-type"/>
+    <input type="hidden" id="elm-entity-id"/>
+    <input type="hidden" id="elm-idx"/>
+    <div class="fr"><label>URL *</label><input type="text" autocomplete="off" id="elm-url"/></div>
+    <div class="fr"><label>Label</label><input type="text" autocomplete="off" id="elm-label" placeholder="e.g. oddstandard IG reel"/></div>
+    <div class="fr"><label>Notes</label><input type="text" autocomplete="off" id="elm-note" placeholder="Optional context"/></div>
+    <div class="fac">
+      <button class="btn btn-ghost" onclick="closeEditLinkModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditLink()">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -959,9 +976,12 @@ function ideaCardHTML(idea){
   const inspirationHTML=`
     <div class="ast" style="margin-bottom:.5rem">Links</div>
     <div class="il">
-      ${links.length?links.map((l,i)=>`<div class="ic2"><button class="idel" onclick="deleteIdeaArrayItem('${idea.id}','inspiration_links',${i})">x</button>
+      ${links.length?links.map((l,i)=>`<div class="ic2">
+        <button class="idel" onclick="deleteIdeaArrayItem('${idea.id}','inspiration_links',${i})">x</button>
         <a href="${esc(l.url)}" target="_blank" class="ilk">&#8599; ${esc(l.label||l.url)}</a>
-        ${l.note?`<div class="in2">${esc(l.note)}</div>`:''}</div>`).join(''):'<div class="fv empty" style="margin-bottom:.5rem">No links yet.</div>'}
+        ${l.note?`<div class="in2">${esc(l.note)}</div>`:''}
+        <button class="btn btn-ghost btn-xs" style="margin-top:.35rem" onclick="event.stopPropagation();openEditLinkModal('idea','${idea.id}',${i})">Edit</button>
+        </div>`).join(''):'<div class="fv empty" style="margin-bottom:.5rem">No links yet.</div>'}
     </div>
     <div class="sf" style="margin-bottom:1.25rem">
       <div class="fg"><div class="frl">URL</div><input type="text" autocomplete="off" id="idea-link-url-${idea.id}" placeholder="https://..." onclick="event.stopPropagation()"/></div>
@@ -1142,9 +1162,12 @@ function productCardHTML(prod){
   const inspirationHTML=`
     <div class="ast" style="margin-bottom:.5rem">Links</div>
     <div class="il">
-      ${links2.length?links2.map((l,i)=>`<div class="ic2"><button class="idel" onclick="deleteProdArrayItem('${prod.id}','inspiration_links',${i})">x</button>
+      ${links2.length?links2.map((l,i)=>`<div class="ic2">
+        <button class="idel" onclick="deleteProdArrayItem('${prod.id}','inspiration_links',${i})">x</button>
         <a href="${esc(l.url)}" target="_blank" class="ilk">&#8599; ${esc(l.label||l.url)}</a>
-        ${l.note?`<div class="in2">${esc(l.note)}</div>`:''}</div>`).join(''):'<div class="fv empty" style="margin-bottom:.5rem">No links yet.</div>'}
+        ${l.note?`<div class="in2">${esc(l.note)}</div>`:''}
+        <button class="btn btn-ghost btn-xs" style="margin-top:.35rem" onclick="event.stopPropagation();openEditLinkModal('prod','${prod.id}',${i})">Edit</button>
+        </div>`).join(''):'<div class="fv empty" style="margin-bottom:.5rem">No links yet.</div>'}
     </div>
     <div class="sf" style="margin-bottom:1.25rem">
       <div class="fg"><div class="frl">URL</div><input type="text" autocomplete="off" id="prod-link-url-${prod.id}" placeholder="https://..." onclick="event.stopPropagation()"/></div>
@@ -2149,6 +2172,38 @@ function openImgViewer(url){
 }
 
 // UI HELPERS
+function openEditLinkModal(entityType,entityId,idx){
+  const entity=entityType==='idea'?ideas.find(i=>i.id===entityId):products.find(p=>p.id===entityId);
+  const l=(entity?.inspiration_links||[])[idx];if(!l)return;
+  document.getElementById('elm-entity-type').value=entityType;
+  document.getElementById('elm-entity-id').value=entityId;
+  document.getElementById('elm-idx').value=idx;
+  document.getElementById('elm-url').value=l.url||'';
+  document.getElementById('elm-label').value=l.label||'';
+  document.getElementById('elm-note').value=l.note||'';
+  document.getElementById('edit-link-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('elm-label').focus(),50);
+}
+function closeEditLinkModal(){document.getElementById('edit-link-modal').classList.remove('open');}
+async function saveEditLink(){
+  const entityType=document.getElementById('elm-entity-type').value;
+  const entityId=document.getElementById('elm-entity-id').value;
+  const idx=parseInt(document.getElementById('elm-idx').value);
+  const url=document.getElementById('elm-url').value.trim();if(!url)return;
+  const updated={url,label:document.getElementById('elm-label').value.trim(),note:document.getElementById('elm-note').value.trim()};
+  if(entityType==='idea'){
+    const idea=ideas.find(i=>i.id===entityId);
+    const inspiration_links=[...(idea.inspiration_links||[])];
+    inspiration_links[idx]=updated;
+    if(await patchIdea(entityId,{inspiration_links})){closeEditLinkModal();renderIdeas();showToast('Link updated');}
+  }else{
+    const prod=products.find(p=>p.id===entityId);
+    const inspiration_links=[...(prod.inspiration_links||[])];
+    inspiration_links[idx]=updated;
+    if(await patchProduct(entityId,{inspiration_links})){closeEditLinkModal();renderProducts();showToast('Link updated');}
+  }
+}
+
 function toggleIdea(id){expandedIdea[id]=!expandedIdea[id];if(!ideaTab[id])ideaTab[id]='overview';renderIdeas();}
 function toggleProd(id){expandedProd[id]=!expandedProd[id];if(!prodTab[id])prodTab[id]='versions';renderProducts();}
 function setIdeaTab(id,tab){ideaTab[id]=tab;renderIdeas();}
@@ -2265,7 +2320,7 @@ function renderFilamentList(){
 // KEYBOARD & TOAST
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['idea-modal','product-modal','ver-modal','edit-ver-modal','move-ver-modal','iter-modal','edit-iter-modal','fb-modal','settings-modal','edit-fl-modal','develop-modal'].forEach(id=>{
+    ['idea-modal','product-modal','ver-modal','edit-ver-modal','move-ver-modal','iter-modal','edit-iter-modal','fb-modal','settings-modal','edit-fl-modal','develop-modal','edit-link-modal'].forEach(id=>{
       document.getElementById(id)?.classList.remove('open');
     });
   }
