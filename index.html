@@ -757,6 +757,26 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
   </div>
 </div>
 
+<!-- EDIT IMAGE MODAL -->
+<div class="modal-backdrop" id="edit-img-modal" onclick="if(event.target===this)closeEditImgModal()">
+  <div class="modal">
+    <h2>Edit image</h2>
+    <input type="hidden" id="eim2-entity-type"/>
+    <input type="hidden" id="eim2-entity-id"/>
+    <input type="hidden" id="eim2-idx"/>
+    <div style="margin-bottom:1rem">
+      <img id="eim2-preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--rmd);display:block" onerror="this.style.display='none'"/>
+    </div>
+    <div class="fr"><label>Label</label><input type="text" autocomplete="off" id="eim2-label" placeholder="e.g. Front view, pattern close-up"/></div>
+    <div class="fr"><label>Notes</label><textarea autocomplete="off" id="eim2-note" placeholder="Optional context or description" style="min-height:60px"></textarea></div>
+    <div class="fac">
+      <button class="btn btn-danger" onclick="deleteInspirationImg()">Delete image</button>
+      <button class="btn btn-ghost" onclick="closeEditImgModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditImg()">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT LINK MODAL -->
 <div class="modal-backdrop" id="edit-link-modal" onclick="if(event.target===this)closeEditLinkModal()">
   <div class="modal">
@@ -991,7 +1011,15 @@ function ideaCardHTML(idea){
     </div>
     <hr class="sdiv"/>
     <div class="ast" style="margin-bottom:.5rem">Images</div>
-    ${pics.length?`<div class="pic-tiles">${pics.map((p,i)=>`<div class="pic-tile" onclick="event.stopPropagation();openLightbox('${idea.id}','idea',${i})"><img src="${esc(p.url)}" onerror="this.style.display='none'"/><div class="ptlabel">${esc(p.label||'Image '+(i+1))}</div></div>`).join('')}</div>`:'<div class="fv empty" style="margin-bottom:.5rem">No images yet.</div>'}
+    ${pics.length?`<div class="pic-tiles">${pics.map((p,i)=>`
+      <div class="pic-tile">
+        <img src="${esc(p.url)}" onclick="event.stopPropagation();openLightbox('${idea.id}','idea',${i})" onerror="this.style.display='none'"/>
+        <div class="ptlabel">${esc(p.label||'Image '+(i+1))}</div>
+        <div style="display:flex;gap:.25rem;padding:.25rem .5rem">
+          <button class="btn btn-ghost btn-xs" style="flex:1" onclick="event.stopPropagation();openEditImgModal('idea','${idea.id}',${i})">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteIdeaArrayItem('${idea.id}','inspiration_pics',${i})">x</button>
+        </div>
+      </div>`).join('')}</div>`:'<div class="fv empty" style="margin-bottom:.5rem">No images yet.</div>'}
     <div class="sf">
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('idea-img-${idea.id}').click()"
         ondragover="event.stopPropagation();event.preventDefault();this.classList.add('drag-over')"
@@ -1177,7 +1205,15 @@ function productCardHTML(prod){
     </div>
     <hr class="sdiv"/>
     <div class="ast" style="margin-bottom:.5rem">Images</div>
-    ${pics2.length?`<div class="pic-tiles">${pics2.map((p,i)=>`<div class="pic-tile" onclick="event.stopPropagation();openLightbox('${prod.id}','prod',${i})"><img src="${esc(p.url)}" onerror="this.style.display='none'"/><div class="ptlabel">${esc(p.label||'Image '+(i+1))}</div></div>`).join('')}</div>`:'<div class="fv empty" style="margin-bottom:.5rem">No images yet.</div>'}
+    ${pics2.length?`<div class="pic-tiles">${pics2.map((p,i)=>`
+      <div class="pic-tile">
+        <img src="${esc(p.url)}" onclick="event.stopPropagation();openLightbox('${prod.id}','prod',${i})" onerror="this.style.display='none'"/>
+        <div class="ptlabel">${esc(p.label||'Image '+(i+1))}</div>
+        <div style="display:flex;gap:.25rem;padding:.25rem .5rem">
+          <button class="btn btn-ghost btn-xs" style="flex:1" onclick="event.stopPropagation();openEditImgModal('prod','${prod.id}',${i})">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteProdArrayItem('${prod.id}','inspiration_pics',${i})">x</button>
+        </div>
+      </div>`).join('')}</div>`:'<div class="fv empty" style="margin-bottom:.5rem">No images yet.</div>'}
     <div class="sf">
       <div class="upload-area" onclick="event.stopPropagation();document.getElementById('prod-img-${prod.id}').click()"
         ondragover="event.stopPropagation();event.preventDefault();this.classList.add('drag-over')"
@@ -2172,6 +2208,51 @@ function openImgViewer(url){
 }
 
 // UI HELPERS
+function openEditImgModal(entityType,entityId,idx){
+  const entity=entityType==='idea'?ideas.find(i=>i.id===entityId):products.find(p=>p.id===entityId);
+  const p=(entity?.inspiration_pics||[])[idx];if(!p)return;
+  document.getElementById('eim2-entity-type').value=entityType;
+  document.getElementById('eim2-entity-id').value=entityId;
+  document.getElementById('eim2-idx').value=idx;
+  document.getElementById('eim2-preview').src=p.url||'';
+  document.getElementById('eim2-label').value=p.label||'';
+  document.getElementById('eim2-note').value=p.note||'';
+  document.getElementById('edit-img-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('eim2-label').focus(),50);
+}
+function closeEditImgModal(){document.getElementById('edit-img-modal').classList.remove('open');}
+async function saveEditImg(){
+  const entityType=document.getElementById('eim2-entity-type').value;
+  const entityId=document.getElementById('eim2-entity-id').value;
+  const idx=parseInt(document.getElementById('eim2-idx').value);
+  if(entityType==='idea'){
+    const idea=ideas.find(i=>i.id===entityId);
+    const inspiration_pics=[...(idea.inspiration_pics||[])];
+    inspiration_pics[idx]={...inspiration_pics[idx],label:document.getElementById('eim2-label').value.trim(),note:document.getElementById('eim2-note').value.trim()};
+    if(await patchIdea(entityId,{inspiration_pics})){closeEditImgModal();renderIdeas();showToast('Image updated');}
+  }else{
+    const prod=products.find(p=>p.id===entityId);
+    const inspiration_pics=[...(prod.inspiration_pics||[])];
+    inspiration_pics[idx]={...inspiration_pics[idx],label:document.getElementById('eim2-label').value.trim(),note:document.getElementById('eim2-note').value.trim()};
+    if(await patchProduct(entityId,{inspiration_pics})){closeEditImgModal();renderProducts();showToast('Image updated');}
+  }
+}
+async function deleteInspirationImg(){
+  if(!confirm('Delete this image?'))return;
+  const entityType=document.getElementById('eim2-entity-type').value;
+  const entityId=document.getElementById('eim2-entity-id').value;
+  const idx=parseInt(document.getElementById('eim2-idx').value);
+  if(entityType==='idea'){
+    const idea=ideas.find(i=>i.id===entityId);
+    const inspiration_pics=(idea.inspiration_pics||[]).filter((_,i)=>i!==idx);
+    if(await patchIdea(entityId,{inspiration_pics})){closeEditImgModal();renderIdeas();showToast('Image deleted');}
+  }else{
+    const prod=products.find(p=>p.id===entityId);
+    const inspiration_pics=(prod.inspiration_pics||[]).filter((_,i)=>i!==idx);
+    if(await patchProduct(entityId,{inspiration_pics})){closeEditImgModal();renderProducts();showToast('Image deleted');}
+  }
+}
+
 function openEditLinkModal(entityType,entityId,idx){
   const entity=entityType==='idea'?ideas.find(i=>i.id===entityId):products.find(p=>p.id===entityId);
   const l=(entity?.inspiration_links||[])[idx];if(!l)return;
@@ -2320,7 +2401,7 @@ function renderFilamentList(){
 // KEYBOARD & TOAST
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['idea-modal','product-modal','ver-modal','edit-ver-modal','move-ver-modal','iter-modal','edit-iter-modal','fb-modal','settings-modal','edit-fl-modal','develop-modal','edit-link-modal'].forEach(id=>{
+    ['idea-modal','product-modal','ver-modal','edit-ver-modal','move-ver-modal','iter-modal','edit-iter-modal','fb-modal','settings-modal','edit-fl-modal','develop-modal','edit-link-modal','edit-img-modal'].forEach(id=>{
       document.getElementById(id)?.classList.remove('open');
     });
   }
