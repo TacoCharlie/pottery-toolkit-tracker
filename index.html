@@ -859,7 +859,15 @@ async function loadSettings(){
 // HELPERS
 function fmt$(n){return'$'+parseFloat(n||0).toFixed(2);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function fD(iso){return iso?new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}
+function fD(iso){
+  if(!iso)return'';
+  // If it's a plain date string (YYYY-MM-DD), parse without timezone conversion
+  if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+    const [y,m,d]=iso.split('-');
+    return new Date(y,m-1,d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+  return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
 function fDT(iso){return iso?new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):''}
 function today(){return new Date().toISOString().split('T')[0];}
 function bumpV(v){
@@ -1048,7 +1056,7 @@ function ideaCardHTML(idea){
         <div class="card-chips">
           <span class="badge ${IDEA_BADGE[idea.status]||'b-idea'}">${idea.status||'New'}</span>
           <span style="font-size:.6875rem;color:var(--fog)">${idea.priority||'Medium'} priority</span>
-          ${fD(idea.date||idea.created_at)?`<span style="font-size:.6875rem;color:var(--fog)">${fD(idea.date||idea.created_at)}</span>`:''}
+          ${idea.date||idea.created_at?`<span style="font-size:.6875rem;color:var(--fog)">Added ${fD(idea.date||idea.created_at)}</span>`:''}
           ${linkedProducts.length?`<span style="font-size:.6875rem;color:var(--gr)">${linkedProducts.length} product${linkedProducts.length!==1?'s':''} in dev</span>`:''}
         </div>
       </div>
@@ -1452,7 +1460,7 @@ function openIdeaModal(editId){
   document.getElementById('im-desc').value=idea?.description||'';
   document.getElementById('im-status').value=idea?.status||'New';
   document.getElementById('im-priority').value=idea?.priority||'Medium';
-  document.getElementById('im-date').value=idea?.date||today();
+  document.getElementById('im-date').value=idea?.date?String(idea.date).split('T')[0]:today();
   document.getElementById('im-tags').value=idea?.tags||'';
   document.getElementById('idea-modal').classList.add('open');
   setTimeout(()=>document.getElementById('im-name').focus(),50);
