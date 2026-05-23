@@ -311,6 +311,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div class="fr"><label>Date</label><input type="date" id="im-date"/></div>
     <div class="fr"><label>Tags (comma-separated)</label><input type="text" autocomplete="off" id="im-tags" placeholder="e.g. texture mat, new pattern"/></div>
     <div class="fac">
+      <button class="btn btn-danger" id="im-delete-btn" style="display:none;margin-right:auto" onclick="deleteIdeaFromModal()">Delete idea</button>
       <button class="btn btn-ghost" onclick="closeIdeaModal()">Cancel</button>
       <button class="btn btn-primary" id="im-save-btn" onclick="saveIdea()">Add idea</button>
     </div>
@@ -1456,6 +1457,7 @@ function openIdeaModal(editId){
   document.getElementById('idea-modal-title').textContent=editId?'Edit idea':'New idea';
   document.getElementById('im-id').value=editId||'';
   document.getElementById('im-save-btn').textContent=editId?'Save changes':'Add idea';
+  const delBtn=document.getElementById('im-delete-btn');if(delBtn)delBtn.style.display=editId?'inline-flex':'none';
   document.getElementById('im-name').value=idea?.name||'';
   document.getElementById('im-desc').value=idea?.description||'';
   document.getElementById('im-status').value=idea?.status||'New';
@@ -1483,6 +1485,14 @@ async function saveIdea(){
   const res=await db.from('ideas').select('*').order('created_at',{ascending:false});
   ideas=res.data||[];render();
 }
+async function deleteIdeaFromModal(){
+  if(!confirm('Delete this idea? This cannot be undone.'))return;
+  const editId=document.getElementById('im-id').value;if(!editId)return;
+  await db.from('ideas').delete().eq('id',editId);
+  ideas=ideas.filter(i=>i.id!==editId);
+  closeIdeaModal();render();showToast('Idea deleted');
+}
+
 async function deleteIdea(id){
   if(!confirm('Delete this idea?'))return;
   await db.from('ideas').delete().eq('id',id);
