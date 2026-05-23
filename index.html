@@ -1832,7 +1832,7 @@ async function saveVersion(){
 function openEditVerModal(prodId,vi){
   const prod=products.find(p=>p.id===prodId);
   const v=(prod?.versions||[])[vi];if(!v)return;
-  document.getElementById('evm-title').textContent=`Edit ${esc(prod.name)} - v${v.num}`;
+  document.getElementById('evm-title').textContent=`Edit ${prod.name} - v${v.num}`;
   document.getElementById('evm-prod-id').value=prodId;
   document.getElementById('evm-ver-idx').value=vi;
   document.getElementById('evm-ver-num').value=v.num||'';
