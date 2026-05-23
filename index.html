@@ -406,7 +406,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     </div>
     <div id="vm-cost-thirdparty" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="vm-unit-cost" placeholder="0.00" step="0.01"/></div>
-      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="vm-supplier" placeholder="e.g. Bay Rubber Company"/></div>
+      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="vm-supplier" placeholder="e.g. Bay Rubber Company" list="suppliers-list"/></div>
     </div>
     <div id="vm-cost-other" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="vm-other-cost" placeholder="0.00" step="0.01"/></div>
@@ -493,7 +493,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     </div>
     <div id="evm-cost-thirdparty" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="evm-unit-cost" step="0.01"/></div>
-      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="evm-supplier"/></div>
+      <div class="fr"><label>Supplier / manufacturer</label><input type="text" autocomplete="off" id="evm-supplier" list="suppliers-list"/></div>
     </div>
     <div id="evm-cost-other" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="evm-other-cost" step="0.01"/></div>
@@ -795,6 +795,8 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
   </div>
 </div>
 
+<datalist id="suppliers-list"></datalist>
+
 <div id="toast"></div>
 
 <script>
@@ -926,17 +928,33 @@ function render(){
 function renderIdeasStats(){
   const t=ideas.length,approvedCount=ideas.filter(i=>i.status==='Approved').length,hiCount=ideas.filter(i=>i.priority==='High').length;
   document.getElementById('ideas-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-num">${t}</div><div class="stat-label">Total ideas</div></div>
-    <div class="stat-card"><div class="stat-num">${approvedCount}</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card"><div class="stat-num">${hiCount}</div><div class="stat-label">High priority</div></div>`;
+    <div class="stat-card" onclick="setIdeaFilterFromStat('all')"><div class="stat-num">${t}</div><div class="stat-label">Total ideas</div></div>
+    <div class="stat-card" onclick="setIdeaFilterFromStat('Approved')"><div class="stat-num">${approvedCount}</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card" onclick="setIdeaFilterFromStat('high')"><div class="stat-num">${hiCount}</div><div class="stat-label">High priority</div></div>`;
 }
 
 function renderProductsStats(){
   const t=products.length,rd=products.filter(p=>p.stage==='R&D').length,ip=products.filter(p=>p.stage==='In Production').length;
   document.getElementById('products-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-num">${t}</div><div class="stat-label">Total products</div></div>
-    <div class="stat-card"><div class="stat-num">${rd}</div><div class="stat-label">In R&D</div></div>
-    <div class="stat-card"><div class="stat-num">${ip}</div><div class="stat-label">In production</div></div>`;
+    <div class="stat-card" onclick="setProdFilterFromStat('all')"><div class="stat-num">${t}</div><div class="stat-label">Total products</div></div>
+    <div class="stat-card" onclick="setProdFilterFromStat('R&D')"><div class="stat-num">${rd}</div><div class="stat-label">In R&D</div></div>
+    <div class="stat-card" onclick="setProdFilterFromStat('In Production')"><div class="stat-num">${ip}</div><div class="stat-label">In production</div></div>`;
+}
+
+function setIdeaFilterFromStat(f){
+  ideaFilter=f==='high'?'high':f;
+  document.querySelectorAll('#ideas-filters .pill').forEach(p=>p.classList.remove('active'));
+  if(f==='all'){const el=document.querySelector('#ideas-filters [data-filter="all"]');if(el)el.classList.add('active');}
+  else if(f==='Approved'){const el=document.querySelector('#ideas-filters [data-filter="Approved"]');if(el)el.classList.add('active');}
+  renderIdeas();
+}
+
+function setProdFilterFromStat(f){
+  prodFilter=f;
+  document.querySelectorAll('#products-filters .pill').forEach(p=>p.classList.remove('active'));
+  if(f==='all'){const el=document.querySelector('#products-filters [data-filter="all"]');if(el)el.classList.add('active');}
+  else{const el=document.querySelector(`#products-filters [data-filter="${f}"]`);if(el)el.classList.add('active');}
+  renderProducts();
 }
 
 function setIdeaFilter(f,el){
@@ -953,7 +971,8 @@ function setProdFilter(f,el){
 function renderIdeas(){
   const q=document.getElementById('ideas-search').value.toLowerCase();
   let filtered=ideas;
-  if(ideaFilter!=='all')filtered=filtered.filter(i=>i.status===ideaFilter);
+  if(ideaFilter==='high')filtered=filtered.filter(i=>i.priority==='High');
+  else if(ideaFilter!=='all')filtered=filtered.filter(i=>i.status===ideaFilter);
   if(q)filtered=filtered.filter(i=>(i.name||'').toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q));
   const el=document.getElementById('ideas-grid');
   if(!filtered.length){el.innerHTML='<div class="es"><div class="big">No ideas yet</div><p>Capture a spark using the New idea button.</p></div>';return;}
@@ -1756,6 +1775,13 @@ function populateFilamentDropdowns(){
   });
 }
 
+function populateSuppliersList(){
+  const dl=document.getElementById('suppliers-list');if(!dl)return;
+  const suppliers=new Set();
+  products.forEach(p=>(p.versions||[]).forEach(v=>{if(v.supplier)suppliers.add(v.supplier);}));
+  dl.innerHTML=[...suppliers].map(s=>`<option value="${esc(s)}">`).join('');
+}
+
 function openVerModal(prodId){
   const prod=products.find(p=>p.id===prodId);
   const versions=prod?.versions||[];
@@ -1770,7 +1796,7 @@ function openVerModal(prodId){
   const flCalc=document.getElementById('vm-filament-calc');if(flCalc){flCalc.innerHTML='Select lot + enter grams';flCalc.style.color='var(--fog)';}
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
-  populateEquipmentDropdowns();populateFilamentDropdowns();
+  populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
 function closeVerModal(){document.getElementById('ver-modal').classList.remove('open');}
@@ -1843,7 +1869,7 @@ function openEditVerModal(prodId,vi){
   const filesList=document.getElementById('evm-files-list');
   if(filesList)filesList.innerHTML=(v.files||[]).map((f,i)=>renderFileRef({label:f.name||'File',url:f.url})+`<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${prodId}',${vi},${i})">Remove</button>`).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
-  populateEquipmentDropdowns();populateFilamentDropdowns();
+  populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   if(v.filamentLotId){const ls=document.getElementById('evm-filament-lot');if(ls){ls.value=v.filamentLotId;calcVerFilament('evm');}}
   if(v.equipmentId){const es=document.getElementById('evm-equipment');if(es){es.value=v.equipmentId;calcVerElectricity('evm');}}
 }
