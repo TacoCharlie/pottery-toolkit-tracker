@@ -1174,6 +1174,7 @@ function productCardHTML(prod){
             </div>
           </div>
           <div style="display:flex;gap:.35rem;align-items:center;flex-shrink:0">
+            ${iter.status!=='Final'?`<button class="btn btn-success btn-xs" onclick="event.stopPropagation();markIterFinal('${prod.id}',${realIdx})">Mark final</button>`:''}
             <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openEditIterModal('${prod.id}',${realIdx})">Edit</button>
             <svg class="ichev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -1390,6 +1391,7 @@ function productCardHTML(prod){
             ${PROD_STAGES.map(s=>`<option value="${s}" ${(prod.stage||'R&D')===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
+        ${prod.stage!=='In Production'?`<button class="btn btn-success btn-sm" onclick="event.stopPropagation();moveProdToProduction('${prod.id}')">Move to production</button>`:'<span style="font-size:.75rem;color:var(--gr);font-weight:600">In Production</span>'}
         <div style="display:flex;align-items:center;gap:.4rem">
           <span style="font-size:.75rem;color:var(--smoke)">Priority</span>
           <select class="isel" onchange="updateProdField('${prod.id}','priority',this.value)" onclick="event.stopPropagation()">
@@ -2327,6 +2329,17 @@ async function saveEditLink(){
     inspiration_links[idx]=updated;
     if(await patchProduct(entityId,{inspiration_links})){closeEditLinkModal();renderProducts();showToast('Link updated');}
   }
+}
+
+async function markIterFinal(prodId,iterIdx){
+  const prod=products.find(p=>p.id===prodId);
+  const iterations=[...(prod.iterations||[])];
+  iterations[iterIdx]={...iterations[iterIdx],status:'Final'};
+  if(await patchProduct(prodId,{iterations})){renderProducts();showToast('Marked as final');}
+}
+
+async function moveProdToProduction(prodId){
+  if(await patchProduct(prodId,{stage:'In Production'})){renderProducts();showToast('Moved to In Production');}
 }
 
 function toggleIdea(id){expandedIdea[id]=!expandedIdea[id];if(!ideaTab[id])ideaTab[id]='overview';renderIdeas();}
