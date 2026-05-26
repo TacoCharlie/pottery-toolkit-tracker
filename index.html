@@ -252,7 +252,9 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
         <div class="fp" id="ideas-filters">
           <button class="pill active" data-filter="all" onclick="setIdeaFilter('all',this)">All</button>
           <button class="pill" data-filter="New" onclick="setIdeaFilter('New',this)">New</button>
-          <button class="pill" data-filter="Considering" onclick="setIdeaFilter('Considering',this)">Considering</button>
+          <button class="pill" data-filter="Low" onclick="setIdeaFilter('Low',this)">Low</button>
+          <button class="pill" data-filter="Medium" onclick="setIdeaFilter('Medium',this)">Medium</button>
+          <button class="pill" data-filter="High" onclick="setIdeaFilter('High',this)">High</button>
           <button class="pill" data-filter="Approved" onclick="setIdeaFilter('Approved',this)">Approved</button>
           <button class="pill" data-filter="Shelved" onclick="setIdeaFilter('Shelved',this)">Shelved</button>
         </div>
@@ -971,7 +973,9 @@ function setProdFilter(f,el){
 function renderIdeas(){
   const q=document.getElementById('ideas-search').value.toLowerCase();
   let filtered=ideas;
-  if(ideaFilter==='high')filtered=filtered.filter(i=>i.priority==='High');
+  if(ideaFilter==='high'||ideaFilter==='High')filtered=filtered.filter(i=>i.priority==='High');
+  else if(ideaFilter==='Medium')filtered=filtered.filter(i=>i.priority==='Medium');
+  else if(ideaFilter==='Low')filtered=filtered.filter(i=>i.priority==='Low');
   else if(ideaFilter!=='all')filtered=filtered.filter(i=>i.status===ideaFilter);
   if(q)filtered=filtered.filter(i=>(i.name||'').toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q));
   const el=document.getElementById('ideas-grid');
@@ -1795,7 +1799,11 @@ function openVerModal(prodId){
   ['vm-who','vm-notes','vm-fg','vm-ph','vm-pm','vm-oc','vm-cn','vm-unit-cost','vm-supplier','vm-other-cost'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const vmCt=document.getElementById('vm-cost-type');if(vmCt){vmCt.value=prod?.product_type==='thirdparty'?'thirdparty':'3dprint';toggleVerCostType('vm');}
   const flSel=document.getElementById('vm-filament-lot');if(flSel)flSel.value='';
+  const eqSel=document.getElementById('vm-equipment');if(eqSel)eqSel.value='';
   const flCalc=document.getElementById('vm-filament-calc');if(flCalc){flCalc.innerHTML='Select lot + enter grams';flCalc.style.color='var(--fog)';}
+  const elCalc=document.getElementById('vm-elec-calc');if(elCalc){elCalc.style.display='none';elCalc.innerHTML='';}
+  // Clear hidden calculated fields
+  ['vm-fcp-calc','vm-lot-id','vm-ec-calc','vm-ph-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
