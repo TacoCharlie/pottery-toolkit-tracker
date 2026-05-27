@@ -1666,11 +1666,18 @@ async function deleteProdCost(id,idx){
 }
 async function addProdPricing(id){
   const tier=document.getElementById('price-tier-'+id).value.trim();
-  const price=document.getElementById('price-amt-'+id).value.trim();
-  if(!tier||!price)return;
+  const priceVal=document.getElementById('price-amt-'+id).value.trim();
+  const price=parseFloat(priceVal);
+  if(!tier){showToast('Please enter a tier/channel name');return;}
+  if(!priceVal||isNaN(price)||price<=0){showToast('Please enter a valid price');return;}
   const prod=products.find(p=>p.id===id);
-  const pricing=[...(prod.pricing||[]),{tier,price:parseFloat(price),note:document.getElementById('price-note-'+id).value.trim()}];
-  if(await patchProduct(id,{pricing})){renderProducts();showToast('Pricing saved');}
+  const pricing=[...(prod.pricing||[]),{tier,price,note:document.getElementById('price-note-'+id).value.trim()}];
+  if(await patchProduct(id,{pricing})){
+    document.getElementById('price-tier-'+id).value='';
+    document.getElementById('price-amt-'+id).value='';
+    document.getElementById('price-note-'+id).value='';
+    renderProducts();showToast('Pricing saved');
+  }
 }
 async function deleteProdPricing(id,idx){
   const prod=products.find(p=>p.id===id);
