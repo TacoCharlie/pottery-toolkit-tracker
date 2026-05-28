@@ -1613,6 +1613,7 @@ async function saveProduct(){
     stage:document.getElementById('pm-stage').value,priority:document.getElementById('pm-priority').value,
     tags:document.getElementById('pm-tags').value.trim(),
     notion_url:document.getElementById('pm-notion-url').value.trim()};
+  const editId=document.getElementById('pm-id').value;
   // Handle cover image upload
   const coverFile=pendingFiles['pm-cover'];
   if(coverFile){
@@ -1622,7 +1623,6 @@ async function saveProduct(){
   }else{
     payload.cover_image=document.getElementById('pm-cover-url').value||null;
   }
-  const editId=document.getElementById('pm-id').value;
   const ideaId=document.getElementById('pm-idea-id').value;
   if(ideaId)payload.idea_id=ideaId;
   let error,newProd;
