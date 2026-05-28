@@ -897,7 +897,7 @@ function vcost(v){
   let t=0;
   const ct=v.costType||'3dprint';
   if(ct==='thirdparty'||ct==='other'){t+=parseFloat(v.unitCost||0);}
-  else{if(v.fg&&v.fcp)t+=parseFloat(v.fg)*parseFloat(v.fcp);if(v.ph&&v.ec)t+=parseFloat(v.ph)*parseFloat(v.ec);}
+  else{if(v.fg&&v.fcp)t+=parseFloat(v.fg)*parseFloat(v.fcp);if(v.ec)t+=parseFloat(v.ec);}
   if(v.oc)t+=parseFloat(v.oc);return t;
 }
 function iterTotalCost(iter,versions){
@@ -1768,7 +1768,7 @@ function calcVerElectricity(prefix){
   const calcEl=document.getElementById(prefix+'-elec-calc');
   if(!sel||!phEl||!calcEl)return;
   const hours=(parseFloat(phEl.value)||0)+(parseFloat(pmEl?.value||0)/60);
-  const eq=(appSettings.equipment||[]).find(e=>e.id===sel.value);
+  const eq=(appSettings.equipment||[]).find(e=>String(e.id)===String(sel.value));
   const kwh=appSettings.cost_per_kwh||0;
   if(!eq||!hours||!kwh){calcEl.style.display='none';return;}
   const cost=hours*eq.watts/1000*kwh;
@@ -1790,7 +1790,7 @@ function calcVerFilament(prefix){
   const fgEl=document.getElementById(prefix+'-fg');
   const calcEl=document.getElementById(prefix+'-filament-calc');
   if(!sel||!fgEl||!calcEl)return;
-  const lot=(appSettings.filamentLots||[]).find(l=>l.id===sel.value);
+  const lot=(appSettings.filamentLots||[]).find(l=>String(l.id)===String(sel.value));
   const grams=parseFloat(fgEl.value)||0;
   if(!lot||!grams){calcEl.innerHTML='Select lot + enter grams';calcEl.style.color='var(--fog)';return;}
   const cost=grams*lot.cpg;
