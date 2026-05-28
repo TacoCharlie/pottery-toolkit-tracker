@@ -1815,8 +1815,8 @@ function populateFilamentDropdowns(){
   ['vm-filament-lot','evm-filament-lot'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const cur=sel.value;
-    const active=(appSettings.filamentLots||[]).filter(l=>!l.depleted);
-    sel.innerHTML='<option value="">Select filament lot...</option>'+active.map(l=>`<option value="${esc(l.id)}">${esc(l.material)}${l.color?' - '+esc(l.color):''} (${fmt$(l.cpg)}/g)</option>`).join('');
+    const lots=appSettings.filamentLots||[];
+    sel.innerHTML='<option value="">Select filament lot...</option>'+lots.map(l=>`<option value="${esc(l.id)}">${esc(l.material)}${l.color?' - '+esc(l.color):''} (${fmt$(l.cpg)}/g)${l.depleted?' — depleted':''}</option>`).join('');
     if(cur)sel.value=cur;
   });
 }
