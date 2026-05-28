@@ -2142,6 +2142,7 @@ async function startDeveloping(){
   const notes=document.getElementById('dev-notes').value.trim();
   if(!name){showToast('Please enter a product name');return;}
   const ideaId=document.getElementById('dev-idea-id').value;
+  const idea=ideas.find(i=>i.id===ideaId);
   const who=document.getElementById('dev-who').value.trim();
   const dateVal=document.getElementById('dev-date').value;
   const dateISO=dateVal?new Date(dateVal).toISOString():new Date().toISOString();
@@ -2151,8 +2152,6 @@ async function startDeveloping(){
     manufacturers:[],costs:[],pricing:[],file_refs:[]};
   const {data:newProd,error}=await db.from('products').insert(payload).select().single();
   if(error){showToast('Error: '+error.message);return;}
-  // Update idea status to Approved if not already
-  const idea=ideas.find(i=>i.id===ideaId);
   if(idea&&idea.status==='New')await patchIdea(ideaId,{status:'Approved'});
   products=[newProd,...products];
   closeDevelopModal();showPage('products');
