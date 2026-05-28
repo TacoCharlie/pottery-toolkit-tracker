@@ -1145,7 +1145,7 @@ function productCardHTML(prod){
           <span class="vdate">${fD(v.date)}</span>
           ${v.who?`<span class="vwho">${esc(v.who)}</span>`:''}
           ${vc>0?`<span class="vcost">${fmt$(vc)}/unit</span>`:''}
-          ${v.supplier?`<span class="vwho">${esc(v.supplier)}</span>`:''}
+          ${v.supplier&&v.costType==='thirdparty'?`<span class="vwho">${esc(v.supplier)}</span>`:''}
           <button class="btn btn-ghost btn-xs" style="margin-left:auto" onclick="event.stopPropagation();openEditVerModal('${prod.id}',${vi})">Edit</button>
         </div>
         <div class="vnotes">${esc(v.notes)}</div>
@@ -1871,6 +1871,11 @@ function openEditVerModal(prodId,vi){
     const sup=document.getElementById('evm-supplier');if(sup)sup.value=v.supplier||'';
   }else if(v.costType==='other'){
     const oc2=document.getElementById('evm-other-cost');if(oc2)oc2.value=v.unitCost||'';
+    const sup=document.getElementById('evm-supplier');if(sup)sup.value='';
+  }else{
+    // 3dprint — clear any stale supplier data
+    const sup=document.getElementById('evm-supplier');if(sup)sup.value='';
+    const uc=document.getElementById('evm-unit-cost');if(uc)uc.value='';
   }
   document.getElementById('evm-fg').value=v.fg||'';
   const totalHours=parseFloat(v.ph)||0;
@@ -1917,7 +1922,7 @@ async function saveEditVersion(){
     date:dateVal?new Date(dateVal).toISOString():existing.date,
     costType,
     unitCost:costType!=='3dprint'?parseFloat(document.getElementById(costType==='thirdparty'?'evm-unit-cost':'evm-other-cost').value)||0:existing.unitCost||0,
-    supplier:document.getElementById('evm-supplier').value.trim()||existing.supplier||'',
+    supplier:costType==='thirdparty'?document.getElementById('evm-supplier').value.trim():'',
     fg:parseFloat(document.getElementById('evm-fg').value)||0,
     fcp:parseFloat(document.getElementById('evm-fcp-calc')?.value)||existing.fcp||0,
     filamentLotId:document.getElementById('evm-lot-id')?.value||existing.filamentLotId||'',
