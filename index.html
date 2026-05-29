@@ -1803,10 +1803,15 @@ function calcVerFilament(prefix){
   var fgEl=document.getElementById(prefix+'-fg');
   var calcEl=document.getElementById(prefix+'-filament-calc');
   if(!sel||!fgEl||!calcEl)return;
-  var opt=sel.options[sel.selectedIndex];
-  var cpg=opt?parseFloat(opt.getAttribute('data-cpg'))||0:0;
   var lotId=sel.value;
   var grams=parseFloat(fgEl.value)||0;
+  // Try data-cpg first (fast path), fall back to appSettings lookup
+  var opt=sel.options[sel.selectedIndex];
+  var cpg=opt?parseFloat(opt.getAttribute('data-cpg'))||0:0;
+  if(!cpg&&lotId){
+    var lot=(appSettings.filamentLots||[]).find(function(l){return String(l.id)===String(lotId);});
+    if(lot)cpg=lot.cpg||0;
+  }
   if(!cpg||!lotId||!grams){calcEl.innerHTML='Select lot + enter grams';calcEl.style.color='var(--fog)';return;}
   var cost=grams*cpg;
   calcEl.innerHTML='<strong style="color:var(--clay)">'+fmt$(cost)+'</strong> <span style="color:var(--fog)">('+grams+'g x '+fmt$(cpg)+'/g)</span>';
@@ -1895,6 +1900,11 @@ async function openVerModal(prodId){
   clearVerPending('vm');
   await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
+  // Explicitly blank new-version selects after populate (populate restores cur, we don't want that here)
+  document.getElementById('vm-filament-lot').value='';
+  document.getElementById('vm-equipment').value='';
+  document.getElementById('vm-ph').value='';
+  document.getElementById('vm-pm').value='';
   document.getElementById('ver-modal').classList.add('open');
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
