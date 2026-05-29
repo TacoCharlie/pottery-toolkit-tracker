@@ -871,7 +871,6 @@ async function loadSettings(){
   try{
     const {data}=await db.from('settings').select('*').eq('id','global').single();
     if(data)appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[],filamentLots:data.filament_lots||[]};
-    console.log('[settings]',JSON.stringify({filament_lots:data?.filament_lots,equipment:data?.equipment}));
   }catch(e){}
 }
 
@@ -1829,7 +1828,7 @@ function populateSuppliersList(){
   dl.innerHTML=[...suppliers].map(s=>`<option value="${esc(s)}">`).join('');
 }
 
-function openVerModal(prodId){
+async function openVerModal(prodId){
   const prod=products.find(p=>p.id===prodId);
   const versions=prod?.versions||[];
   const nextNum=versions.length?bumpV(versions[0].num):'1';
@@ -1847,6 +1846,7 @@ function openVerModal(prodId){
   ['vm-fcp-calc','vm-lot-id','vm-ec-calc','vm-ph-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
+  await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
@@ -1925,6 +1925,7 @@ function openEditVerModal(prodId,vi){
   const filesList=document.getElementById('evm-files-list');
   if(filesList)filesList.innerHTML=(v.files||[]).map((f,i)=>renderFileRef({label:f.name||'File',url:f.url})+`<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${prodId}',${vi},${i})">Remove</button>`).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
+  await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   if(v.filamentLotId){const ls=document.getElementById('evm-filament-lot');if(ls){ls.value=v.filamentLotId;calcVerFilament('evm');}}
   if(v.equipmentId){const es=document.getElementById('evm-equipment');if(es){es.value=v.equipmentId;calcVerElectricity('evm');}}
