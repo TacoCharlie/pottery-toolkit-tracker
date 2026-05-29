@@ -870,10 +870,20 @@ async function loadAll(){
 }
 
 async function loadSettings(){
-  try{
-    const {data}=await db.from('settings').select('*').eq('id','global').single();
-    if(data)appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[],filamentLots:data.filament_lots||[]};
-  }catch(e){}
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const {data,error}=await db.from('settings').select('*').eq('id','global').single();
+      if(error)throw error;
+      if(data){
+        appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[],filamentLots:data.filament_lots||[]};
+        return;
+      }
+    }catch(e){
+      console.warn('[loadSettings] attempt '+(attempt+1)+' failed:',e?.message||e);
+      if(attempt<2)await new Promise(r=>setTimeout(r,500));
+    }
+  }
+  console.error('[loadSettings] all attempts failed');
 }
 
 // HELPERS
@@ -1883,10 +1893,9 @@ async function openVerModal(prodId){
   // Clear hidden calculated fields
   ['vm-fcp-calc','vm-lot-id','vm-ec-calc','vm-ph-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
-  document.getElementById('ver-modal').classList.add('open');
-  await loadSettings();
   await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
+  document.getElementById('ver-modal').classList.add('open');
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
 function closeVerModal(){document.getElementById('ver-modal').classList.remove('open');}
@@ -1963,8 +1972,9 @@ async function openEditVerModal(prodId,vi){
   }
   const filesList=document.getElementById('evm-files-list');
   if(filesList)filesList.innerHTML=(v.files||[]).map((f,i)=>renderFileRef({label:f.name||'File',url:f.url})+`<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${prodId}',${vi},${i})">Remove</button>`).join('');
-  document.getElementById('edit-ver-modal').classList.add('open');
+  await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
+  document.getElementById('edit-ver-modal').classList.add('open');
   if(v.filamentLotId){const ls=document.getElementById('evm-filament-lot');if(ls){ls.value=v.filamentLotId;calcVerFilament('evm');}}
   if(v.equipmentId){const es=document.getElementById('evm-equipment');if(es){es.value=v.equipmentId;calcVerElectricity('evm');}}
   calcTotalCost('evm');
