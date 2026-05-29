@@ -1899,12 +1899,14 @@ async function openVerModal(prodId){
   ['vm-fcp-calc','vm-lot-id','vm-ec-calc','vm-ph-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
   await loadSettings();
+  console.log('[before populate] vm-equipment=',document.getElementById('vm-equipment').value,'vm-filament-lot=',document.getElementById('vm-filament-lot').value,'vm-ph=',document.getElementById('vm-ph').value);
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
-  // Explicitly blank new-version selects after populate (populate restores cur, we don't want that here)
+  console.log('[after populate] vm-equipment=',document.getElementById('vm-equipment').value,'vm-filament-lot=',document.getElementById('vm-filament-lot').value,'vm-ph=',document.getElementById('vm-ph').value);
   document.getElementById('vm-filament-lot').value='';
   document.getElementById('vm-equipment').value='';
   document.getElementById('vm-ph').value='';
   document.getElementById('vm-pm').value='';
+  console.log('[after reset] vm-equipment=',document.getElementById('vm-equipment').value,'vm-filament-lot=',document.getElementById('vm-filament-lot').value,'vm-ph=',document.getElementById('vm-ph').value);
   document.getElementById('ver-modal').classList.add('open');
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
 }
