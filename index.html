@@ -426,8 +426,9 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div id="vm-cost-other" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="vm-other-cost" placeholder="0.00" step="0.01"/></div>
     </div>
-    <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01"/></div>
+    <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="vm-oc" placeholder="0.00" step="0.01" oninput="calcTotalCost('vm')"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="vm-cn" placeholder="e.g. sample fee, failed print, shipping"/></div>
+    <div id="vm-total-cost" style="display:none;background:var(--sand);border:1px solid var(--b);border-radius:var(--rmd);padding:.6rem 1rem;font-size:.9rem;margin-bottom:.75rem">Total cost per unit: <strong id="vm-total-cost-val" style="color:var(--clay)"></strong></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photos & renders</div>
     <div class="fr">
@@ -513,8 +514,9 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
     <div id="evm-cost-other" style="display:none">
       <div class="fr"><label>Cost per unit ($)</label><input type="number" autocomplete="off" id="evm-other-cost" step="0.01"/></div>
     </div>
-    <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01"/></div>
+    <div class="fr"><label>Other costs ($)</label><input type="number" autocomplete="off" id="evm-oc" step="0.01" oninput="calcTotalCost('evm')"/></div>
     <div class="fr"><label>Cost notes</label><input type="text" autocomplete="off" id="evm-cn"/></div>
+    <div id="evm-total-cost" style="display:none;background:var(--sand);border:1px solid var(--b);border-radius:var(--rmd);padding:.6rem 1rem;font-size:.9rem;margin-bottom:.75rem">Total cost per unit: <strong id="evm-total-cost-val" style="color:var(--clay)"></strong></div>
     <hr style="border:none;border-top:1px solid var(--b);margin:1rem 0"/>
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--smoke);margin-bottom:.75rem">Photos & renders</div>
     <div class="fr">
@@ -1782,6 +1784,7 @@ function calcVerElectricity(prefix){
   let ph=document.getElementById(prefix+'-ph-total');
   if(!ph){ph=document.createElement('input');ph.type='hidden';ph.id=prefix+'-ph-total';calcEl.parentElement.appendChild(ph);}
   ph.value=hours.toFixed(4);
+  calcTotalCost(prefix);
 }
 function getCalcElecCost(prefix){const el=document.getElementById(prefix+'-ec-calc');return el?parseFloat(el.value)||0:0;}
 
@@ -1801,6 +1804,33 @@ function calcVerFilament(prefix){
   let lh=document.getElementById(prefix+'-lot-id');
   if(!lh){lh=document.createElement('input');lh.type='hidden';lh.id=prefix+'-lot-id';fgEl.parentElement.appendChild(lh);}
   lh.value=lot.id;
+  calcTotalCost(prefix);
+}
+
+function calcTotalCost(prefix){
+  var ct=document.getElementById(prefix+'-cost-type');
+  var costType=ct?ct.value:'3dprint';
+  var total=0;
+  if(costType==='thirdparty'){
+    var uc=document.getElementById(prefix+'-unit-cost');
+    total+=parseFloat(uc?uc.value:0)||0;
+  }else if(costType==='other'){
+    var oc2=document.getElementById(prefix+'-other-cost');
+    total+=parseFloat(oc2?oc2.value:0)||0;
+  }else{
+    var fcp=document.getElementById(prefix+'-fcp-calc');
+    var fg=document.getElementById(prefix+'-fg');
+    var ec=document.getElementById(prefix+'-ec-calc');
+    total+=(parseFloat(fcp?fcp.value:0)||0)*(parseFloat(fg?fg.value:0)||0);
+    total+=parseFloat(ec?ec.value:0)||0;
+  }
+  var oc=document.getElementById(prefix+'-oc');
+  total+=parseFloat(oc?oc.value:0)||0;
+  var box=document.getElementById(prefix+'-total-cost');
+  var val=document.getElementById(prefix+'-total-cost-val');
+  if(!box||!val)return;
+  if(total>0){box.style.display='block';val.textContent=fmt$(total)+'/unit';}
+  else{box.style.display='none';}
 }
 
 function populateEquipmentDropdowns(){
@@ -1935,6 +1965,7 @@ async function openEditVerModal(prodId,vi){
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   if(v.filamentLotId){const ls=document.getElementById('evm-filament-lot');if(ls){ls.value=v.filamentLotId;calcVerFilament('evm');}}
   if(v.equipmentId){const es=document.getElementById('evm-equipment');if(es){es.value=v.equipmentId;calcVerElectricity('evm');}}
+  calcTotalCost('evm');
 }
 function closeEditVerModal(){document.getElementById('edit-ver-modal').classList.remove('open');}
 
