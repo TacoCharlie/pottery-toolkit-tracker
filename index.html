@@ -1880,7 +1880,7 @@ async function saveVersion(){
   if(await patchProduct(prodId,{versions})){clearVerPending('vm');closeVerModal();renderProducts();showToast('Version logged');}
 }
 
-function openEditVerModal(prodId,vi){
+async function openEditVerModal(prodId,vi){
   const prod=products.find(p=>p.id===prodId);
   const v=(prod?.versions||[])[vi];if(!v)return;
   document.getElementById('evm-title').textContent=`Edit ${prod.name} - v${v.num}`;
