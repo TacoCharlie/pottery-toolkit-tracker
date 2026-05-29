@@ -871,6 +871,7 @@ async function loadSettings(){
   try{
     const {data}=await db.from('settings').select('*').eq('id','global').single();
     if(data)appSettings={cost_per_kwh:parseFloat(data.cost_per_kwh||0),equipment:data.equipment||[],filamentLots:data.filament_lots||[]};
+    console.log('[settings]',JSON.stringify({filament_lots:data?.filament_lots,equipment:data?.equipment}));
   }catch(e){}
 }
 
