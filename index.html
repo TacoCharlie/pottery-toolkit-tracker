@@ -1770,7 +1770,7 @@ function calcVerElectricity(prefix){
   const calcEl=document.getElementById(prefix+'-elec-calc');
   if(!sel||!phEl||!calcEl)return;
   const hours=(parseFloat(phEl.value)||0)+(parseFloat(pmEl?.value||0)/60);
-  const eq=(appSettings.equipment||[]).find(e=>String(e.id)===String(sel.value));
+  const eq=(appSettings.equipment||[]).find(e=>e.id===sel.value);
   const kwh=appSettings.cost_per_kwh||0;
   if(!eq||!hours||!kwh){calcEl.style.display='none';return;}
   const cost=hours*eq.watts/1000*kwh;
@@ -1789,22 +1789,48 @@ function calcVerElectricity(prefix){
 function getCalcElecCost(prefix){const el=document.getElementById(prefix+'-ec-calc');return el?parseFloat(el.value)||0:0;}
 
 function calcVerFilament(prefix){
-  const sel=document.getElementById(prefix+'-filament-lot');
-  const fgEl=document.getElementById(prefix+'-fg');
-  const calcEl=document.getElementById(prefix+'-filament-calc');
+  var sel=document.getElementById(prefix+'-filament-lot');
+  var fgEl=document.getElementById(prefix+'-fg');
+  var calcEl=document.getElementById(prefix+'-filament-calc');
   if(!sel||!fgEl||!calcEl)return;
-  const lot=(appSettings.filamentLots||[]).find(l=>String(l.id)===String(sel.value));
-  const grams=parseFloat(fgEl.value)||0;
-  if(!lot||!grams){calcEl.innerHTML='Select lot + enter grams';calcEl.style.color='var(--fog)';return;}
-  const cost=grams*lot.cpg;
-  calcEl.innerHTML=`<strong style="color:var(--clay)">${fmt$(cost)}</strong> <span style="color:var(--fog)">(${grams}g x ${fmt$(lot.cpg)}/g)</span>`;
-  let h=document.getElementById(prefix+'-fcp-calc');
+  var opt=sel.options[sel.selectedIndex];
+  var cpg=opt?parseFloat(opt.getAttribute('data-cpg'))||0:0;
+  var lotId=sel.value;
+  var grams=parseFloat(fgEl.value)||0;
+  if(!cpg||!lotId||!grams){calcEl.innerHTML='Select lot + enter grams';calcEl.style.color='var(--fog)';return;}
+  var cost=grams*cpg;
+  calcEl.innerHTML='<strong style="color:var(--clay)">'+fmt$(cost)+'</strong> <span style="color:var(--fog)">('+grams+'g x '+fmt$(cpg)+'/g)</span>';
+  var h=document.getElementById(prefix+'-fcp-calc');
   if(!h){h=document.createElement('input');h.type='hidden';h.id=prefix+'-fcp-calc';fgEl.parentElement.appendChild(h);}
-  h.value=lot.cpg.toFixed(6);
-  let lh=document.getElementById(prefix+'-lot-id');
+  h.value=cpg.toFixed(6);
+  var lh=document.getElementById(prefix+'-lot-id');
   if(!lh){lh=document.createElement('input');lh.type='hidden';lh.id=prefix+'-lot-id';fgEl.parentElement.appendChild(lh);}
-  lh.value=lot.id;
+  lh.value=lotId;
   calcTotalCost(prefix);
+}
+
+function populateEquipmentDropdowns(){
+  ['vm-equipment','evm-equipment'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Select equipment...</option>'+(appSettings.equipment||[]).map(e=>`<option value="${esc(e.id)}">${esc(e.name)} (${e.watts}W)</option>`).join('');
+    if(cur)sel.value=cur;
+  });
+}
+function populateFilamentDropdowns(){
+  ['vm-filament-lot','evm-filament-lot'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    var lots=appSettings.filamentLots||[];
+    var opts='<option value="">Select filament lot...</option>';
+    for(var i=0;i<lots.length;i++){
+      var l=lots[i];
+      var label=esc(l.material||'')+(l.color?' - '+esc(l.color):'')+'  ('+fmt$(l.cpg)+'/g)'+(l.depleted?' (depleted)':'');
+      opts+='<option value="'+esc(String(l.id||''))+'" data-cpg="'+(l.cpg||0)+'">'+label+'</option>';
+    }
+    sel.innerHTML=opts;
+    if(cur)sel.value=cur;
+  });
 }
 
 function calcTotalCost(prefix){
@@ -1833,30 +1859,6 @@ function calcTotalCost(prefix){
   else{box.style.display='none';}
 }
 
-function populateEquipmentDropdowns(){
-  ['vm-equipment','evm-equipment'].forEach(id=>{
-    const sel=document.getElementById(id);if(!sel)return;
-    const cur=sel.value;
-    sel.innerHTML='<option value="">Select equipment...</option>'+(appSettings.equipment||[]).map(e=>`<option value="${esc(e.id)}">${esc(e.name)} (${e.watts}W)</option>`).join('');
-    if(cur)sel.value=cur;
-  });
-}
-function populateFilamentDropdowns(){
-  ['vm-filament-lot','evm-filament-lot'].forEach(function(id){
-    var sel=document.getElementById(id);if(!sel)return;
-    var cur=sel.value;
-    var lots=appSettings.filamentLots||[];
-    var opts='<option value="">Select filament lot...</option>';
-    for(var i=0;i<lots.length;i++){
-      var l=lots[i];
-      var label=esc(l.material||'')+(l.color?' - '+esc(l.color):'')+'  ('+fmt$(l.cpg)+'/g)'+(l.depleted?' (depleted)':'');
-      opts+='<option value="'+esc(String(l.id||''))+'">'+label+'</option>';
-    }
-    sel.innerHTML=opts;
-    if(cur)sel.value=cur;
-  });
-}
-
 function populateSuppliersList(){
   const dl=document.getElementById('suppliers-list');if(!dl)return;
   const suppliers=new Set();
@@ -1882,6 +1884,7 @@ async function openVerModal(prodId){
   ['vm-fcp-calc','vm-lot-id','vm-ec-calc','vm-ph-total'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   clearVerPending('vm');
   document.getElementById('ver-modal').classList.add('open');
+  await loadSettings();
   await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   setTimeout(()=>document.getElementById('vm-notes').focus(),50);
@@ -1961,7 +1964,6 @@ async function openEditVerModal(prodId,vi){
   const filesList=document.getElementById('evm-files-list');
   if(filesList)filesList.innerHTML=(v.files||[]).map((f,i)=>renderFileRef({label:f.name||'File',url:f.url})+`<button class="btn btn-danger btn-xs" style="margin-bottom:.35rem" onclick="removeExistingVerFile('${prodId}',${vi},${i})">Remove</button>`).join('');
   document.getElementById('edit-ver-modal').classList.add('open');
-  await loadSettings();
   populateEquipmentDropdowns();populateFilamentDropdowns();populateSuppliersList();
   if(v.filamentLotId){const ls=document.getElementById('evm-filament-lot');if(ls){ls.value=v.filamentLotId;calcVerFilament('evm');}}
   if(v.equipmentId){const es=document.getElementById('evm-equipment');if(es){es.value=v.equipmentId;calcVerElectricity('evm');}}
