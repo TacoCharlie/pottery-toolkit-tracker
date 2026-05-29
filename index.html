@@ -1812,11 +1812,17 @@ function populateEquipmentDropdowns(){
   });
 }
 function populateFilamentDropdowns(){
-  ['vm-filament-lot','evm-filament-lot'].forEach(id=>{
-    const sel=document.getElementById(id);if(!sel)return;
-    const cur=sel.value;
-    const lots=appSettings.filamentLots||[];
-    sel.innerHTML='<option value="">Select filament lot...</option>'+lots.map(l=>`<option value="${esc(l.id)}">${esc(l.material)}${l.color?' - '+esc(l.color):''} (${fmt$(l.cpg)}/g)${l.depleted?' — depleted':''}</option>`).join('');
+  ['vm-filament-lot','evm-filament-lot'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    var lots=appSettings.filamentLots||[];
+    var opts='<option value="">Select filament lot...</option>';
+    for(var i=0;i<lots.length;i++){
+      var l=lots[i];
+      var label=esc(l.material||'')+(l.color?' - '+esc(l.color):'')+'  ('+fmt$(l.cpg)+'/g)'+(l.depleted?' (depleted)':'');
+      opts+='<option value="'+esc(String(l.id||''))+'">'+label+'</option>';
+    }
+    sel.innerHTML=opts;
     if(cur)sel.value=cur;
   });
 }
