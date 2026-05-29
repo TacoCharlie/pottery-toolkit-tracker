@@ -487,7 +487,7 @@ body{font-family:var(--fb);background:var(--sand);color:var(--kiln);min-height:1
         </select>
       </div>
       <div class="f2c">
-        <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1"/></div>
+        <div class="fr"><label>Filament used (grams)</label><input type="number" autocomplete="off" id="evm-fg" step="0.1" oninput="calcVerFilament('evm')"/></div>
         <div class="fr"><label>Filament cost</label><div id="evm-filament-calc" style="font-size:.8125rem;color:var(--smoke);padding:.65rem 0">Select lot + enter grams</div></div>
       </div>
       <div class="f2c">
